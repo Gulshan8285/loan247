@@ -1,38 +1,51 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Loader2, Lock, ShieldCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ExternalLink,
+  Lock,
+  ShieldCheck,
+} from "lucide-react";
 import { useLoanStore } from "@/lib/loan-store";
 import { StepHeader } from "./step-header";
 
 /**
  * PayFeeStep
- * Because the customer's CIBIL is low, a small one-time processing fee of
- * ₹59 is required to continue. The "Pay ₹59" button triggers a brief payment
- * processing state, then advances to the next step.
+ * Because the customer's CIBIL is low, a one-time processing fee of ₹59 is
+ * required. The "Pay ₹59" button opens the PayU payment link in a new tab.
+ * After the customer completes the payment there, they click "I've completed
+ * the payment" to advance to the final "Application In Process" screen.
+ *
+ * All form data is persisted, so if the customer leaves and returns (or
+ * restarts), their previously-filled details are intact and they land back
+ * on this step.
  */
 const FEE_AMOUNT = 59;
+const PAYU_LINK = "https://u.payu.in/PAYUMN/qrmSQjzxzY09";
 
 export function PayFeeStep() {
   const goNext = useLoanStore((s) => s.goNext);
   const data = useLoanStore((s) => s.data);
-  const [paying, setPaying] = useState(false);
+  const [linkOpened, setLinkOpened] = useState(false);
   const [paid, setPaid] = useState(false);
 
-  // After the (simulated) payment completes, advance to the next step.
+  // After the customer confirms payment, advance to the final screen.
   useEffect(() => {
     if (!paid) return;
     const id = setTimeout(() => goNext(), 1400);
     return () => clearTimeout(id);
   }, [paid, goNext]);
 
-  function handlePay() {
-    setPaying(true);
-    // Simulate a payment gateway round-trip (~1.8s)
-    setTimeout(() => {
-      setPaying(false);
-      setPaid(true);
-    }, 1800);
+  function handleOpenPayment() {
+    // Open the PayU payment page in a new tab
+    window.open(PAYU_LINK, "_blank", "noopener,noreferrer");
+    setLinkOpened(true);
+  }
+
+  function handleConfirmPaid() {
+    setPaid(true);
   }
 
   return (
@@ -70,35 +83,56 @@ export function PayFeeStep() {
               <p className="text-xs text-gray-500">One-time · Refundable</p>
             </div>
           </div>
-          <p className="text-2xl font-black text-gray-900">
-            ₹{FEE_AMOUNT}
-          </p>
+          <p className="text-2xl font-black text-gray-900">₹{FEE_AMOUNT}</p>
         </div>
         <div className="border-t border-gray-200 px-5 py-3 text-xs text-gray-500">
-          For {data.firstName || "applicant"} · Loan of ₹{new Intl.NumberFormat("en-IN").format(data.loanAmount)}
+          For {data.firstName || "applicant"} · Loan of ₹
+          {new Intl.NumberFormat("en-IN").format(data.loanAmount)}
         </div>
       </div>
 
-      {/* Pay button / processing / paid states */}
-      <div className="mt-6">
-        {!paid && !paying && (
+      {/* Pay button → confirmation flow */}
+      <div className="mt-6 space-y-3">
+        {!linkOpened && !paid && (
           <button
-            onClick={handlePay}
+            onClick={handleOpenPayment}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-500 px-6 py-4 text-base font-bold text-white shadow-sm transition-transform hover:brightness-105 active:scale-[0.98]"
           >
             <Lock className="h-4 w-4" />
-            Pay ₹{FEE_AMOUNT} &amp; continue
+            Pay ₹{FEE_AMOUNT} now
           </button>
         )}
 
-        {paying && (
-          <button
-            disabled
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-300 px-6 py-4 text-base font-bold text-white"
-          >
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Processing payment…
-          </button>
+        {linkOpened && !paid && (
+          <>
+            <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+              <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+              <div className="text-left">
+                <p className="text-sm font-semibold text-gray-900">
+                  Payment page opened in a new tab.
+                </p>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  Complete the ₹{FEE_AMOUNT} payment there. Once done, click the button below to continue.
+                  Didn&apos;t open?{" "}
+                  <a
+                    href={PAYU_LINK}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-blue-600 underline underline-offset-2"
+                  >
+                    Open again
+                  </a>
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleConfirmPaid}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-500 px-6 py-4 text-base font-bold text-white shadow-sm transition-transform hover:brightness-105 active:scale-[0.98]"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              I&apos;ve completed the payment — continue
+            </button>
+          </>
         )}
 
         {paid && (
@@ -111,7 +145,7 @@ export function PayFeeStep() {
 
       <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-[11px] text-gray-400">
         <Lock className="h-3 w-3" />
-        Secured payment · 256-bit encryption · This won&apos;t affect your credit score
+        Secured by PayU · 256-bit encryption · This won&apos;t affect your credit score
       </p>
     </div>
   );
