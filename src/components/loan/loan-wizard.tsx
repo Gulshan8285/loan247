@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Info, RotateCcw, Sparkles } from "lucide-react";
 import { isStepValid, useLoanStore } from "@/lib/loan-store";
 import { ProgressTrack } from "./progress-track";
 import { WelcomeStep } from "./steps/welcome-step";
+import { GoogleLoginStep } from "./steps/google-login-step";
 import { BasicInfoStep } from "./steps/basic-info-step";
 import { AnalyserStep } from "./steps/analyser-step";
 import { CibilReportStep } from "./steps/cibil-report-step";
@@ -16,6 +17,7 @@ import { ApplicationInProcessStep } from "./steps/application-in-process-step";
 
 const STEPS = [
   WelcomeStep,
+  GoogleLoginStep,
   BasicInfoStep,
   AnalyserStep,
   CibilReportStep,
@@ -46,8 +48,8 @@ export function LoanWizard() {
   const isFirst = step === 0;
   const isLast = step === STEPS.length - 1;
   // Steps that auto-advance or have their own CTA (no standard footer needed):
-  //  2 Analyser, 3 CIBIL, 6 Bank Processing (auto), 7 Pay Fee (own button)
-  const isAutoStep = step === 2 || step === 3 || step === 6 || step === 7;
+  //  3 Analyser, 4 CIBIL, 7 Bank Processing (auto), 8 Pay Fee (own button)
+  const isAutoStep = step === 3 || step === 4 || step === 7 || step === 8;
   const canProceed = isStepValid(step, data);
 
   return (

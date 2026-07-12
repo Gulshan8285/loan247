@@ -6,7 +6,9 @@ import {
   CheckCircle2,
   ExternalLink,
   Lock,
+  RotateCcw,
   ShieldCheck,
+  XCircle,
 } from "lucide-react";
 import { useLoanStore } from "@/lib/loan-store";
 import { StepHeader } from "./step-header";
@@ -14,38 +16,46 @@ import { StepHeader } from "./step-header";
 /**
  * PayFeeStep
  * Because the customer's CIBIL is low, a one-time processing fee of ₹59 is
- * required. The "Pay ₹59" button opens the PayU payment link in a new tab.
- * After the customer completes the payment there, they click "I've completed
- * the payment" to advance to the final "Application In Process" screen.
+ * required. The "Pay ₹59 now" button opens the PayU payment link in a new tab.
  *
- * All form data is persisted, so if the customer leaves and returns (or
- * restarts), their previously-filled details are intact and they land back
- * on this step.
+ * After the link opens, the customer must indicate the outcome:
+ *  - "Payment done"     → advances to the final "Application In Process" screen
+ *  - "Payment cancelled" → shows a cancelled state with a "Try again" button
+ *
+ * This correctly reflects the payment status instead of always confirming.
  */
 const FEE_AMOUNT = 59;
 const PAYU_LINK = "https://u.payu.in/PAYUMN/qrmSQjzxzY09";
 
+type Phase = "idle" | "opened" | "paid" | "cancelled";
+
 export function PayFeeStep() {
   const goNext = useLoanStore((s) => s.goNext);
   const data = useLoanStore((s) => s.data);
-  const [linkOpened, setLinkOpened] = useState(false);
-  const [paid, setPaid] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
 
-  // After the customer confirms payment, advance to the final screen.
+  // After the customer confirms payment is done, advance to the final screen.
   useEffect(() => {
-    if (!paid) return;
+    if (phase !== "paid") return;
     const id = setTimeout(() => goNext(), 1400);
     return () => clearTimeout(id);
-  }, [paid, goNext]);
+  }, [phase, goNext]);
 
   function handleOpenPayment() {
-    // Open the PayU payment page in a new tab
     window.open(PAYU_LINK, "_blank", "noopener,noreferrer");
-    setLinkOpened(true);
+    setPhase("opened");
   }
 
-  function handleConfirmPaid() {
-    setPaid(true);
+  function handlePaid() {
+    setPhase("paid");
+  }
+
+  function handleCancelled() {
+    setPhase("cancelled");
+  }
+
+  function handleRetry() {
+    setPhase("idle");
   }
 
   return (
@@ -53,7 +63,7 @@ export function PayFeeStep() {
       <StepHeader
         title="Processing fee"
         subtitle="A small one-time fee to continue your application."
-        badge="Step 8 · Fee"
+        badge="Step 9 · Fee"
       />
 
       {/* CIBIL low notice */}
@@ -91,9 +101,10 @@ export function PayFeeStep() {
         </div>
       </div>
 
-      {/* Pay button → confirmation flow */}
+      {/* Action area — changes based on payment phase */}
       <div className="mt-6 space-y-3">
-        {!linkOpened && !paid && (
+        {/* IDLE: show the Pay button */}
+        {phase === "idle" && (
           <button
             onClick={handleOpenPayment}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-500 px-6 py-4 text-base font-bold text-white shadow-sm transition-transform hover:brightness-105 active:scale-[0.98]"
@@ -103,7 +114,8 @@ export function PayFeeStep() {
           </button>
         )}
 
-        {linkOpened && !paid && (
+        {/* OPENED: link opened, ask customer for the outcome */}
+        {phase === "opened" && (
           <>
             <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
               <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
@@ -112,7 +124,7 @@ export function PayFeeStep() {
                   Payment page opened in a new tab.
                 </p>
                 <p className="mt-0.5 text-xs text-gray-500">
-                  Complete the ₹{FEE_AMOUNT} payment there. Once done, click the button below to continue.
+                  Complete the ₹{FEE_AMOUNT} payment there, then tell us the result below.
                   Didn&apos;t open?{" "}
                   <a
                     href={PAYU_LINK}
@@ -125,21 +137,49 @@ export function PayFeeStep() {
                 </p>
               </div>
             </div>
+            {/* Two outcome buttons: done vs cancelled */}
             <button
-              onClick={handleConfirmPaid}
+              onClick={handlePaid}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-500 px-6 py-4 text-base font-bold text-white shadow-sm transition-transform hover:brightness-105 active:scale-[0.98]"
             >
               <CheckCircle2 className="h-4 w-4" />
-              I&apos;ve completed the payment — continue
+              Payment done — continue
+            </button>
+            <button
+              onClick={handleCancelled}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50"
+            >
+              <XCircle className="h-4 w-4" />
+              Payment cancelled
             </button>
           </>
         )}
 
-        {paid && (
+        {/* PAID: success, advancing */}
+        {phase === "paid" && (
           <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-6 py-4 text-emerald-700">
             <CheckCircle2 className="h-5 w-5" />
             <span className="text-sm font-semibold">Payment successful! Continuing…</span>
           </div>
+        )}
+
+        {/* CANCELLED: show cancelled, offer retry */}
+        {phase === "cancelled" && (
+          <>
+            <div className="flex items-center justify-center gap-2 rounded-xl border border-amber-100 bg-amber-50/60 px-6 py-4 text-amber-700">
+              <XCircle className="h-5 w-5" />
+              <span className="text-sm font-semibold">
+                Payment cancelled. You haven&apos;t been charged.
+              </span>
+            </div>
+            <button
+              onClick={handleRetry}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-500 px-6 py-4 text-base font-bold text-white shadow-sm transition-transform hover:brightness-105 active:scale-[0.98]"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Try again
+            </button>
+          </>
         )}
       </div>
 

@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 
 const STEP_LABELS = [
   "Welcome",
+  "Login",
   "Identity",
   "Analyser",
   "CIBIL",

@@ -27,6 +27,10 @@ export interface LoanFormData {
   ifscCode: string;
   bankName: string;
   branch: string;
+  // Google account (from sign-in)
+  googleName: string;
+  googleEmail: string;
+  googlePicture: string;
   purpose: LoanPurpose;
   occupation: OccupationType;
   monthlyIncome: string;
@@ -47,18 +51,19 @@ export interface LoanState {
 }
 
 /**
- * Flow (9 steps):
+ * Flow (10 steps):
  *  0 Welcome
- *  1 Basic Info
- *  2 Analyser        (auto-advances, 60s)
- *  3 CIBIL Report    (auto-advances, 30s)
- *  4 Loan Amount     (capped at approved amount — decrease only)
- *  5 Bank Details
- *  6 Bank Processing (auto-advances, 30s)
- *  7 Pay Fee (₹59)   (own button)
- *  8 Application In Process  (terminal — "we will connect you")
+ *  1 Google Login
+ *  2 Basic Info
+ *  3 Analyser        (auto-advances, 60s)
+ *  4 CIBIL Report    (auto-advances, 30s)
+ *  5 Loan Amount     (capped at approved amount — decrease only)
+ *  6 Bank Details
+ *  7 Bank Processing (auto-advances, 30s)
+ *  8 Pay Fee (₹59)   (own button)
+ *  9 Application In Process  (terminal — "we will connect you")
  */
-export const TOTAL_STEPS = 9;
+export const TOTAL_STEPS = 10;
 
 const initialData: LoanFormData = {
   firstName: "",
@@ -73,6 +78,9 @@ const initialData: LoanFormData = {
   ifscCode: "",
   bankName: "",
   branch: "",
+  googleName: "",
+  googleEmail: "",
+  googlePicture: "",
   purpose: "",
   occupation: "",
   monthlyIncome: "",
@@ -177,7 +185,7 @@ export const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
  */
 export function validateStep(step: number, data: LoanFormData): string[] {
   switch (step) {
-    case 1: {
+    case 2: {
       // Basic Info
       const errs: string[] = [];
       if (!data.firstName.trim()) errs.push("firstName");
@@ -187,7 +195,7 @@ export function validateStep(step: number, data: LoanFormData): string[] {
       if (!PAN_REGEX.test(data.panCard)) errs.push("panCard");
       return errs;
     }
-    case 5: {
+    case 6: {
       // Bank Details
       const errs: string[] = [];
       if (!data.accountHolderName.trim()) errs.push("accountHolderName");
