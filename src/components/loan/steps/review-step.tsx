@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, Calendar, CreditCard, IndianRupee, MapPin, Target, User } from "lucide-react";
+import { Briefcase, Calendar, CreditCard, IndianRupee, Landmark, MapPin, Target, User } from "lucide-react";
 import { formatINR, useLoanStore } from "@/lib/loan-store";
 import { StepHeader } from "./step-header";
 
@@ -19,6 +19,7 @@ export function ReviewStep() {
     { icon: MapPin, label: "Pin code", value: data.pincode || "—" },
     { icon: CreditCard, label: "PAN number", value: data.panCard || "—" },
     { icon: IndianRupee, label: "Loan amount", value: `₹${formatINR(data.loanAmount)}`, highlight: true },
+    { icon: Landmark, label: "Bank account", value: data.accountNumber ? `${data.bankName} ••${data.accountNumber.slice(-4)}` : "—" },
     { icon: Target, label: "Purpose", value: data.purpose || "—" },
     { icon: Briefcase, label: "Occupation", value: data.occupation || "—" },
     {

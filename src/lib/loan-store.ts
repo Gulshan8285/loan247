@@ -21,6 +21,12 @@ export interface LoanFormData {
   panCard: string;
   loanAmount: number;
   cibilApprovedAmount: number; // max allowed (from CIBIL), 0 = not set
+  // Bank details
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
+  branch: string;
   purpose: LoanPurpose;
   occupation: OccupationType;
   monthlyIncome: string;
@@ -38,7 +44,7 @@ export interface LoanState {
   reset: () => void;
 }
 
-export const TOTAL_STEPS = 10;
+export const TOTAL_STEPS = 13;
 
 const initialData: LoanFormData = {
   firstName: "",
@@ -48,6 +54,11 @@ const initialData: LoanFormData = {
   panCard: "",
   loanAmount: 100000,
   cibilApprovedAmount: 0,
+  accountHolderName: "",
+  accountNumber: "",
+  ifscCode: "",
+  bankName: "",
+  branch: "",
   purpose: "",
   occupation: "",
   monthlyIncome: "",
@@ -86,16 +97,19 @@ export const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
  * Empty array means the step is valid and the user may proceed.
  *
  * Step indices:
- *  0 Welcome       — no fields
- *  1 Basic Info    — firstName, lastName, dob, pincode(6), panCard(valid)
- *  2 Analyser      — auto-advances
- *  3 CIBIL Report  — auto-advances
- *  4 Loan Amount   — always has a default value
- *  5 Purpose       — purpose selected
- *  6 Occupation    — occupation selected
- *  7 Income        — monthlyIncome(>0), salaryMode selected
- *  8 Review        — always valid
- *  9 Success       — terminal
+ *  0 Welcome          — no fields
+ *  1 Basic Info       — firstName, lastName, dob, pincode(6), panCard(valid)
+ *  2 Analyser         — auto-advances
+ *  3 CIBIL Report     — auto-advances
+ *  4 Loan Amount      — always has a default value
+ *  5 Bank Details     — accountHolderName, accountNumber(>=9), ifsc(valid), bankName
+ *  6 Bank Processing  — auto-advances (30s)
+ *  7 Pay Fee (₹59)    — custom pay button (handled in-step)
+ *  8 Purpose          — purpose selected
+ *  9 Occupation       — occupation selected
+ *  10 Income          — monthlyIncome(>0), salaryMode selected
+ *  11 Review          — always valid
+ *  12 Success         — terminal
  */
 export function validateStep(step: number, data: LoanFormData): string[] {
   switch (step) {
@@ -108,11 +122,19 @@ export function validateStep(step: number, data: LoanFormData): string[] {
       if (!PAN_REGEX.test(data.panCard)) errs.push("panCard");
       return errs;
     }
-    case 5:
+    case 5: {
+      const errs: string[] = [];
+      if (!data.accountHolderName.trim()) errs.push("accountHolderName");
+      if (data.accountNumber.replace(/\s/g, "").length < 9) errs.push("accountNumber");
+      if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(data.ifscCode)) errs.push("ifscCode");
+      if (!data.bankName.trim()) errs.push("bankName");
+      return errs;
+    }
+    case 8:
       return data.purpose ? [] : ["purpose"];
-    case 6:
+    case 9:
       return data.occupation ? [] : ["occupation"];
-    case 7: {
+    case 10: {
       const errs: string[] = [];
       if (!data.monthlyIncome || Number(data.monthlyIncome) <= 0) errs.push("monthlyIncome");
       if (!data.salaryMode) errs.push("salaryMode");
@@ -134,9 +156,9 @@ export function isStepValid(step: number, data: LoanFormData): boolean {
  * absent) so that the SAME customer always sees the SAME score & approved
  * amount — even after a refresh or revisiting the step.
  *
- * Score is in the low band 443–450 (per product requirement).
+ * Score is in the low band 440–450 (per product requirement).
  */
-const CIBIL_SCORE_MIN = 443;
+const CIBIL_SCORE_MIN = 440;
 const CIBIL_SCORE_MAX = 450;
 const APPROVED_OPTIONS = [300000, 400000, 500000, 600000, 700000, 800000];
 

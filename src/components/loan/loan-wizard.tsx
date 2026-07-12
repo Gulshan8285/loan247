@@ -8,6 +8,9 @@ import { BasicInfoStep } from "./steps/basic-info-step";
 import { AnalyserStep } from "./steps/analyser-step";
 import { CibilReportStep } from "./steps/cibil-report-step";
 import { LoanAmountStep } from "./steps/loan-amount-step";
+import { BankDetailsStep } from "./steps/bank-details-step";
+import { BankProcessingStep } from "./steps/bank-processing-step";
+import { PayFeeStep } from "./steps/pay-fee-step";
 import { LoanPurposeStep } from "./steps/loan-purpose-step";
 import { OccupationStep } from "./steps/occupation-step";
 import { IncomeStep } from "./steps/income-step";
@@ -20,6 +23,9 @@ const STEPS = [
   AnalyserStep,
   CibilReportStep,
   LoanAmountStep,
+  BankDetailsStep,
+  BankProcessingStep,
+  PayFeeStep,
   LoanPurposeStep,
   OccupationStep,
   IncomeStep,
@@ -37,7 +43,9 @@ export function LoanWizard() {
   const CurrentStep = STEPS[step];
   const isFirst = step === 0;
   const isLast = step === STEPS.length - 1;
-  const isAutoStep = step === 2 || step === 3; // Analyser & CIBIL auto-advance (no footer)
+  // Steps that auto-advance or have their own CTA (no standard footer needed):
+  //  2 Analyser, 3 CIBIL, 6 Bank Processing (auto), 7 Pay Fee (own button)
+  const isAutoStep = step === 2 || step === 3 || step === 6 || step === 7;
   const canProceed = isStepValid(step, data);
 
   return (

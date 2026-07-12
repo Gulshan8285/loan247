@@ -86,16 +86,21 @@ export function CibilReportStep() {
     { from: 750, to: 900, color: "#10b981", label: "Excellent" },
   ];
 
-  // Needle animation: eases from the high end toward the final low score,
-  // with a damped oscillation while "calculating".
+  // Needle animation: scans UP toward the higher scores first (~700), with a
+  // decaying oscillation, then drifts DOWN to settle on the final LOW score
+  // (440–450). This gives the realistic "meter goes high then settles low"
+  // effect requested.
   const finalScoreAngle = startAngle + ((finalScore - 300) / 600) * (endAngle - startAngle);
+  const midAngle = startAngle + ((680 - 300) / 600) * (endAngle - startAngle); // ~680 scan center
   const t = progress / 100;
-  const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
-  const baseAngle = startAngle + (finalScoreAngle - startAngle) * eased;
-  const wobble = revealed ? 0 : 14 * Math.sin(t * Math.PI * 5) * (1 - t);
-  const needleAngle = revealed ? finalScoreAngle : baseAngle + wobble;
+  // Drift the scan center from ~680 down to the final low score as t→1
+  const drift = midAngle + (finalScoreAngle - midAngle) * t;
+  // Decaying oscillation amplitude (sweeps wide early, settles late)
+  const amp = (midAngle - finalScoreAngle) * 1.3 * (1 - t);
+  const wobble = revealed ? 0 : Math.sin(t * Math.PI * 6) * amp;
+  const needleAngle = revealed ? finalScoreAngle : drift + wobble;
   const liveScore = Math.round(300 + ((needleAngle - startAngle) / (endAngle - startAngle)) * 600);
-  const displayScore = revealed ? finalScore : liveScore;
+  const displayScore = revealed ? finalScore : Math.max(300, Math.min(900, liveScore));
 
   const needle = polar(needleAngle, r - 16);
   const remainingSec = Math.max(0, Math.ceil((CIBIL_TIMER_MS * (1 - t)) / 1000));
