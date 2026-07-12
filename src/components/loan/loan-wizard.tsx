@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { ArrowLeft, ArrowRight, Info, RotateCcw, Sparkles } from "lucide-react";
 import { isStepValid, useLoanStore } from "@/lib/loan-store";
 import { ProgressTrack } from "./progress-track";
@@ -11,11 +12,7 @@ import { LoanAmountStep } from "./steps/loan-amount-step";
 import { BankDetailsStep } from "./steps/bank-details-step";
 import { BankProcessingStep } from "./steps/bank-processing-step";
 import { PayFeeStep } from "./steps/pay-fee-step";
-import { LoanPurposeStep } from "./steps/loan-purpose-step";
-import { OccupationStep } from "./steps/occupation-step";
-import { IncomeStep } from "./steps/income-step";
-import { ReviewStep } from "./steps/review-step";
-import { SuccessStep } from "./steps/success-step";
+import { ApplicationInProcessStep } from "./steps/application-in-process-step";
 
 const STEPS = [
   WelcomeStep,
@@ -26,19 +23,24 @@ const STEPS = [
   BankDetailsStep,
   BankProcessingStep,
   PayFeeStep,
-  LoanPurposeStep,
-  OccupationStep,
-  IncomeStep,
-  ReviewStep,
-  SuccessStep,
+  ApplicationInProcessStep,
 ] as const;
 
 export function LoanWizard() {
   const step = useLoanStore((s) => s.step);
   const data = useLoanStore((s) => s.data);
+  const hydrated = useLoanStore((s) => s.hydrated);
+  const hydrate = useLoanStore((s) => s.hydrate);
   const goNext = useLoanStore((s) => s.goNext);
   const goBack = useLoanStore((s) => s.goBack);
   const reset = useLoanStore((s) => s.reset);
+
+  // Load any persisted state (returning customer) AFTER mount to avoid SSR
+  // hydration mismatches. A returning customer lands on the step they left
+  // (e.g. the Pay step) with all their previously-filled details intact.
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
 
   const CurrentStep = STEPS[step];
   const isFirst = step === 0;
@@ -74,7 +76,7 @@ export function LoanWizard() {
         </div>
       </header>
 
-      {/* Progress (hidden on welcome & success) */}
+      {/* Progress (hidden on welcome & final) */}
       {!isFirst && !isLast && (
         <div className="sticky top-[57px] z-20 border-b border-gray-100 bg-white">
           <div className="mx-auto max-w-3xl px-4 py-3 sm:px-6">
@@ -86,12 +88,18 @@ export function LoanWizard() {
       {/* Step content */}
       <main className="flex flex-1 items-start justify-center px-4 pt-6 pb-32 sm:px-6 sm:pt-10 sm:pb-36">
         <div className="w-full max-w-3xl">
-          <CurrentStep />
+          {hydrated ? (
+            <CurrentStep />
+          ) : (
+            <div className="flex h-64 items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-emerald-500" />
+            </div>
+          )}
         </div>
       </main>
 
       {/* Sticky footer nav */}
-      {!isFirst && !isLast && !isAutoStep && (
+      {!isFirst && !isLast && !isAutoStep && hydrated && (
         <footer className="sticky bottom-0 z-30 border-t border-gray-100 bg-white/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:px-6">
           <div className="mx-auto max-w-3xl">
             {!canProceed && (

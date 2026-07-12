@@ -37,14 +37,28 @@ export interface LoanState {
   step: number;
   direction: 1 | -1;
   data: LoanFormData;
+  hydrated: boolean; // true once persisted state has been loaded on the client
   setStep: (step: number) => void;
   goNext: () => void;
   goBack: () => void;
   update: (patch: Partial<LoanFormData>) => void;
   reset: () => void;
+  hydrate: () => void;
 }
 
-export const TOTAL_STEPS = 13;
+/**
+ * Flow (9 steps):
+ *  0 Welcome
+ *  1 Basic Info
+ *  2 Analyser        (auto-advances, 60s)
+ *  3 CIBIL Report    (auto-advances, 30s)
+ *  4 Loan Amount     (capped at approved amount — decrease only)
+ *  5 Bank Details
+ *  6 Bank Processing (auto-advances, 30s)
+ *  7 Pay Fee (₹59)   (own button)
+ *  8 Application In Process  (terminal — "we will connect you")
+ */
+export const TOTAL_STEPS = 9;
 
 const initialData: LoanFormData = {
   firstName: "",
@@ -65,24 +79,89 @@ const initialData: LoanFormData = {
   salaryMode: "",
 };
 
+/* ----------------------------- Persistence ----------------------------- */
+// Form data + current step are persisted to localStorage so a returning
+// customer lands on the Pay step with all previously-filled details intact.
+
+const STORAGE_KEY = "aurora-lend-state-v1";
+
+function persistState(state: LoanState) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ step: state.step, data: state.data }),
+    );
+  } catch {
+    /* ignore quota / privacy errors */
+  }
+}
+
+export function loadPersistedState(): { step: number; data: LoanFormData } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed.step !== "number" || typeof parsed.data !== "object") return null;
+    return {
+      step: Math.max(0, Math.min(TOTAL_STEPS - 1, parsed.step)),
+      data: { ...initialData, ...parsed.data },
+    };
+  } catch {
+    return null;
+  }
+}
+
+function clearPersistedState() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export const useLoanStore = create<LoanState>((set, get) => ({
   step: 0,
   direction: 1,
   data: initialData,
-  setStep: (step) => set({ step, direction: step >= get().step ? 1 : -1 }),
+  hydrated: false,
+  setStep: (step) => {
+    set({ step, direction: step >= get().step ? 1 : -1 });
+    persistState(get());
+  },
   goNext: () => {
     const { step, data } = get();
     if (step >= TOTAL_STEPS - 1) return;
-    // Block forward navigation until the current step is valid
     if (!isStepValid(step, data)) return;
     set({ step: step + 1, direction: 1 });
+    persistState(get());
   },
   goBack: () => {
     const { step } = get();
-    if (step > 0) set({ step: step - 1, direction: -1 });
+    if (step > 0) {
+      set({ step: step - 1, direction: -1 });
+      persistState(get());
+    }
   },
-  update: (patch) => set((s) => ({ data: { ...s.data, ...patch } })),
-  reset: () => set({ step: 0, direction: 1, data: initialData }),
+  update: (patch) => {
+    set((s) => ({ data: { ...s.data, ...patch } }));
+    persistState(get());
+  },
+  reset: () => {
+    set({ step: 0, direction: 1, data: initialData });
+    clearPersistedState();
+  },
+  hydrate: () => {
+    if (get().hydrated) return;
+    const persisted = loadPersistedState();
+    if (persisted) {
+      set({ step: persisted.step, data: persisted.data, hydrated: true });
+    } else {
+      set({ hydrated: true });
+    }
+  },
 }));
 
 export function formatINR(n: number): string {
@@ -95,25 +174,11 @@ export const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
 /**
  * Returns the list of missing/invalid field keys for a given step.
  * Empty array means the step is valid and the user may proceed.
- *
- * Step indices:
- *  0 Welcome          — no fields
- *  1 Basic Info       — firstName, lastName, dob, pincode(6), panCard(valid)
- *  2 Analyser         — auto-advances
- *  3 CIBIL Report     — auto-advances
- *  4 Loan Amount      — always has a default value
- *  5 Bank Details     — accountHolderName, accountNumber(>=9), ifsc(valid), bankName
- *  6 Bank Processing  — auto-advances (30s)
- *  7 Pay Fee (₹59)    — custom pay button (handled in-step)
- *  8 Purpose          — purpose selected
- *  9 Occupation       — occupation selected
- *  10 Income          — monthlyIncome(>0), salaryMode selected
- *  11 Review          — always valid
- *  12 Success         — terminal
  */
 export function validateStep(step: number, data: LoanFormData): string[] {
   switch (step) {
     case 1: {
+      // Basic Info
       const errs: string[] = [];
       if (!data.firstName.trim()) errs.push("firstName");
       if (!data.lastName.trim()) errs.push("lastName");
@@ -123,21 +188,12 @@ export function validateStep(step: number, data: LoanFormData): string[] {
       return errs;
     }
     case 5: {
+      // Bank Details
       const errs: string[] = [];
       if (!data.accountHolderName.trim()) errs.push("accountHolderName");
       if (data.accountNumber.replace(/\s/g, "").length < 9) errs.push("accountNumber");
       if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(data.ifscCode)) errs.push("ifscCode");
       if (!data.bankName.trim()) errs.push("bankName");
-      return errs;
-    }
-    case 8:
-      return data.purpose ? [] : ["purpose"];
-    case 9:
-      return data.occupation ? [] : ["occupation"];
-    case 10: {
-      const errs: string[] = [];
-      if (!data.monthlyIncome || Number(data.monthlyIncome) <= 0) errs.push("monthlyIncome");
-      if (!data.salaryMode) errs.push("salaryMode");
       return errs;
     }
     default:
@@ -153,8 +209,8 @@ export function isStepValid(step: number, data: LoanFormData): boolean {
  * Deterministic CIBIL score & approved amount for a given customer.
  *
  * Derived from a stable hash of the PAN (falls back to name+dob when PAN is
- * absent) so that the SAME customer always sees the SAME score & approved
- * amount — even after a refresh or revisiting the step.
+ * absent) so the SAME customer always sees the SAME score & approved amount
+ * — even after a refresh or revisiting the step.
  *
  * Score is in the low band 440–450 (per product requirement).
  */
@@ -182,4 +238,11 @@ export function getCibilForCustomer(data: LoanFormData): {
   const score = CIBIL_SCORE_MIN + (h % (CIBIL_SCORE_MAX - CIBIL_SCORE_MIN + 1));
   const approvedAmount = APPROVED_OPTIONS[h % APPROVED_OPTIONS.length];
   return { score, approvedAmount };
+}
+
+/** Stable application reference number (derived from PAN) for the final screen. */
+export function getApplicationRef(data: LoanFormData): string {
+  const seed = data.panCard.trim() || `${data.firstName}${data.dob}`;
+  const h = hashString(seed || "anon");
+  return `AUR${(h % 900000 + 100000).toString()}`;
 }

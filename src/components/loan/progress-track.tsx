@@ -12,11 +12,7 @@ const STEP_LABELS = [
   "Bank",
   "Verify",
   "Fee",
-  "Purpose",
-  "Occupation",
-  "Income",
-  "Review",
-  "Done",
+  "Submitted",
 ];
 
 /**

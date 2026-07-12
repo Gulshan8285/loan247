@@ -17,9 +17,9 @@ import { getCibilForCustomer, useLoanStore } from "@/lib/loan-store";
  * 3. Then reveals "Your loan demand is approved" with an approved amount,
  *    which is written to the store so the Amount page shows the same figure
  *    and caps it as the maximum (decrease only).
- * 4. Auto-advances to the Amount page after a 1-minute analysis.
+ * 4. Auto-advances to the Amount page after a 30-second analysis.
  */
-export const CIBIL_TIMER_MS = 60_000; // 1 minute
+export const CIBIL_TIMER_MS = 30_000; // 30 seconds
 
 export function CibilReportStep() {
   const goNext = useLoanStore((s) => s.goNext);
@@ -88,8 +88,8 @@ export function CibilReportStep() {
 
   // Needle animation: scans UP toward the higher scores first (~700), with a
   // decaying oscillation, then drifts DOWN to settle on the final LOW score
-  // (440–450). This gives the realistic "meter goes high then settles low"
-  // effect requested.
+  // (440–450). The needle is clamped to the gauge range [300, 900] so it
+  // never visually crosses the 900 mark.
   const finalScoreAngle = startAngle + ((finalScore - 300) / 600) * (endAngle - startAngle);
   const midAngle = startAngle + ((680 - 300) / 600) * (endAngle - startAngle); // ~680 scan center
   const t = progress / 100;
@@ -98,9 +98,11 @@ export function CibilReportStep() {
   // Decaying oscillation amplitude (sweeps wide early, settles late)
   const amp = (midAngle - finalScoreAngle) * 1.3 * (1 - t);
   const wobble = revealed ? 0 : Math.sin(t * Math.PI * 6) * amp;
-  const needleAngle = revealed ? finalScoreAngle : drift + wobble;
+  // Clamp the raw needle angle to the valid gauge range so it never exceeds 900
+  const rawAngle = revealed ? finalScoreAngle : drift + wobble;
+  const needleAngle = Math.max(startAngle, Math.min(endAngle, rawAngle));
   const liveScore = Math.round(300 + ((needleAngle - startAngle) / (endAngle - startAngle)) * 600);
-  const displayScore = revealed ? finalScore : Math.max(300, Math.min(900, liveScore));
+  const displayScore = revealed ? finalScore : liveScore;
 
   const needle = polar(needleAngle, r - 16);
   const remainingSec = Math.max(0, Math.ceil((CIBIL_TIMER_MS * (1 - t)) / 1000));
