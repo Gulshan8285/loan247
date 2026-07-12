@@ -6,6 +6,7 @@ import { ProgressTrack } from "./progress-track";
 import { WelcomeStep } from "./steps/welcome-step";
 import { BasicInfoStep } from "./steps/basic-info-step";
 import { AnalyserStep } from "./steps/analyser-step";
+import { CibilReportStep } from "./steps/cibil-report-step";
 import { LoanAmountStep } from "./steps/loan-amount-step";
 import { LoanPurposeStep } from "./steps/loan-purpose-step";
 import { OccupationStep } from "./steps/occupation-step";
@@ -17,6 +18,7 @@ const STEPS = [
   WelcomeStep,
   BasicInfoStep,
   AnalyserStep,
+  CibilReportStep,
   LoanAmountStep,
   LoanPurposeStep,
   OccupationStep,
@@ -35,7 +37,7 @@ export function LoanWizard() {
   const CurrentStep = STEPS[step];
   const isFirst = step === 0;
   const isLast = step === STEPS.length - 1;
-  const isAnalysing = step === 2; // AnalyserStep auto-advances
+  const isAutoStep = step === 2 || step === 3; // Analyser & CIBIL auto-advance (no footer)
   const canProceed = isStepValid(step, data);
 
   return (
@@ -81,7 +83,7 @@ export function LoanWizard() {
       </main>
 
       {/* Sticky footer nav */}
-      {!isFirst && !isLast && !isAnalysing && (
+      {!isFirst && !isLast && !isAutoStep && (
         <footer className="sticky bottom-0 z-30 border-t border-gray-100 bg-white/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:px-6">
           <div className="mx-auto max-w-3xl">
             {!canProceed && (

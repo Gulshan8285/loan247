@@ -37,7 +37,7 @@ export interface LoanState {
   reset: () => void;
 }
 
-export const TOTAL_STEPS = 9;
+export const TOTAL_STEPS = 10;
 
 const initialData: LoanFormData = {
   firstName: "",
@@ -87,12 +87,13 @@ export const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
  *  0 Welcome       — no fields
  *  1 Basic Info    — firstName, lastName, dob, pincode(6), panCard(valid)
  *  2 Analyser      — auto-advances
- *  3 Loan Amount   — always has a default value
- *  4 Purpose       — purpose selected
- *  5 Occupation    — occupation selected
- *  6 Income        — monthlyIncome(>0), salaryMode selected
- *  7 Review        — always valid
- *  8 Success       — terminal
+ *  3 CIBIL Report  — auto-advances
+ *  4 Loan Amount   — always has a default value
+ *  5 Purpose       — purpose selected
+ *  6 Occupation    — occupation selected
+ *  7 Income        — monthlyIncome(>0), salaryMode selected
+ *  8 Review        — always valid
+ *  9 Success       — terminal
  */
 export function validateStep(step: number, data: LoanFormData): string[] {
   switch (step) {
@@ -105,11 +106,11 @@ export function validateStep(step: number, data: LoanFormData): string[] {
       if (!PAN_REGEX.test(data.panCard)) errs.push("panCard");
       return errs;
     }
-    case 4:
-      return data.purpose ? [] : ["purpose"];
     case 5:
+      return data.purpose ? [] : ["purpose"];
+    case 6:
       return data.occupation ? [] : ["occupation"];
-    case 6: {
+    case 7: {
       const errs: string[] = [];
       if (!data.monthlyIncome || Number(data.monthlyIncome) <= 0) errs.push("monthlyIncome");
       if (!data.salaryMode) errs.push("salaryMode");

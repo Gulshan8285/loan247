@@ -7,6 +7,7 @@ const STEP_LABELS = [
   "Welcome",
   "Identity",
   "Analyser",
+  "CIBIL",
   "Amount",
   "Purpose",
   "Occupation",
