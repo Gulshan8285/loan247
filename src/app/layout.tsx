@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Aurora Lend — Simple Loan Journey",
+  title: "LOAN247 — Simple Loan Journey",
   description: "A clean, simple, multi-step loan application experience built with Next.js.",
-  keywords: ["loan", "fintech", "Next.js", "simple"],
-  authors: [{ name: "Aurora Lend" }],
+  keywords: ["loan", "fintech", "Next.js", "LOAN247", "simple"],
+  authors: [{ name: "LOAN247" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },

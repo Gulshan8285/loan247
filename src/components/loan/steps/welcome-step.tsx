@@ -2,6 +2,7 @@
 
 import { ArrowRight, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { useLoanStore } from "@/lib/loan-store";
+import { LoanLogo } from "../loan-logo";
 
 export function WelcomeStep() {
   const goNext = useLoanStore((s) => s.goNext);
@@ -14,13 +15,13 @@ export function WelcomeStep() {
 
   return (
     <div className="text-center">
-      <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-500 shadow-lg shadow-emerald-500/20">
-        <span className="text-4xl font-black text-white">₹</span>
+      <div className="mx-auto mb-8">
+        <LoanLogo size={80} className="shadow-lg shadow-emerald-500/20" />
       </div>
 
       <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-        Welcome to Aurora Lend
+        Welcome to LOAN247
       </span>
 
       <h1 className="text-balance text-3xl font-black leading-tight tracking-tight text-gray-900 sm:text-5xl">
@@ -28,7 +29,7 @@ export function WelcomeStep() {
       </h1>
 
       <p className="mx-auto mt-4 max-w-md text-pretty text-base text-gray-500 sm:text-lg">
-        A clean, fast journey from your details to a curated loan offer — no paperwork, no fuss.
+        A clean, fast journey from your details to a curated loan offer — available 24/7, no paperwork, no fuss.
       </p>
 
       <div className="mx-auto mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">

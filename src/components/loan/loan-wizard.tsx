@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { ArrowLeft, ArrowRight, Info, RotateCcw, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Info, RotateCcw } from "lucide-react";
 import { isStepValid, useLoanStore } from "@/lib/loan-store";
 import { ProgressTrack } from "./progress-track";
+import { LoanLogo } from "./loan-logo";
 import { WelcomeStep } from "./steps/welcome-step";
 import { GoogleLoginStep } from "./steps/google-login-step";
 import { BasicInfoStep } from "./steps/basic-info-step";
@@ -58,12 +59,10 @@ export function LoanWizard() {
       <header className="sticky top-0 z-30 border-b border-gray-100 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500">
-              <Sparkles className="h-4.5 w-4.5 text-white" strokeWidth={2.5} />
-            </div>
+            <LoanLogo size={32} />
             <div className="leading-tight">
-              <p className="text-sm font-semibold tracking-tight text-gray-900">Aurora Lend</p>
-              <p className="text-[10px] uppercase tracking-widest text-gray-400">Loan Journey</p>
+              <p className="text-sm font-semibold tracking-tight text-gray-900">LOAN247</p>
+              <p className="text-[10px] uppercase tracking-widest text-gray-400">Loans, 24/7</p>
             </div>
           </div>
           {!isFirst && (
