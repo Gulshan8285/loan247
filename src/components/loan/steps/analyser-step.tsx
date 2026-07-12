@@ -70,10 +70,10 @@ export function AnalyserStep() {
         <span className="pb-1 text-xs font-medium uppercase tracking-widest text-gray-400">Analyzing</span>
       </div>
 
-      {/* Flat progress bar */}
+      {/* Flat progress bar — no CSS transition; rAF already drives 60fps smooth updates */}
       <div className="mx-auto mt-4 h-2.5 w-full max-w-md overflow-hidden rounded-full bg-gray-200">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-[width] duration-150"
+          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
           style={{ width: `${progress}%` }}
         />
       </div>

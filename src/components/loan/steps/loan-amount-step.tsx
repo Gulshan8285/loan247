@@ -1,6 +1,6 @@
 "use client";
 
-import { Minus, Plus, TrendingUp } from "lucide-react";
+import { CheckCircle2, Minus, Plus, TrendingUp } from "lucide-react";
 import { formatINR, useLoanStore } from "@/lib/loan-store";
 import { StepHeader } from "./step-header";
 
@@ -31,6 +31,9 @@ export function LoanAmountStep() {
 
       {/* Amount display */}
       <div className="mt-8 flex flex-col items-center">
+        <span className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+          <CheckCircle2 className="h-3.5 w-3.5" /> Pre-approved amount
+        </span>
         <div className="flex items-center justify-center rounded-2xl border border-gray-100 bg-gray-50/60 px-6 py-8 sm:px-12">
           <span className="mr-2 text-3xl font-bold text-emerald-600 sm:text-4xl">₹</span>
           <span className="text-5xl font-black tabular-nums tracking-tight text-gray-900 sm:text-7xl">
