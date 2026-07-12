@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Aurora Lend — 3D Loan Journey",
-  description: "A 3D, animated, multi-step loan application experience built with Next.js, framer-motion and a glassmorphic aurora design system.",
-  keywords: ["loan", "fintech", "3D", "animation", "Next.js", "framer-motion"],
+  title: "Aurora Lend — Simple Loan Journey",
+  description: "A clean, simple, multi-step loan application experience built with Next.js.",
+  keywords: ["loan", "fintech", "Next.js", "simple"],
   authors: [{ name: "Aurora Lend" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#06060d",
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -36,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >

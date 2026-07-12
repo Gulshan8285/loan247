@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
   Briefcase,
   Car,
@@ -12,18 +11,17 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { type LoanPurpose, useLoanStore } from "@/lib/loan-store";
-import { TiltCard } from "../field-3d";
 import { StepHeader } from "./step-header";
 
-const PURPOSES: { key: LoanPurpose; label: string; icon: React.ElementType; hue: string }[] = [
-  { key: "Home", label: "Home", icon: Home, hue: "rgba(52,211,153,0.9)" },
-  { key: "Vehicle", label: "Vehicle", icon: Car, hue: "rgba(34,211,238,0.9)" },
-  { key: "Education", label: "Education", icon: GraduationCap, hue: "rgba(167,139,250,0.9)" },
-  { key: "Business", label: "Business", icon: Briefcase, hue: "rgba(244,114,182,0.9)" },
-  { key: "Medical", label: "Medical", icon: Stethoscope, hue: "rgba(251,191,36,0.9)" },
-  { key: "Travel", label: "Travel", icon: Plane, hue: "rgba(94,234,212,0.9)" },
-  { key: "Wedding", label: "Wedding", icon: Heart, hue: "rgba(248,113,113,0.9)" },
-  { key: "Debt consolidation", label: "Debt consolidation", icon: CreditCard, hue: "rgba(168,247,196,0.9)" },
+const PURPOSES: { key: LoanPurpose; label: string; icon: React.ElementType; color: string }[] = [
+  { key: "Home", label: "Home", icon: Home, color: "#10b981" },
+  { key: "Vehicle", label: "Vehicle", icon: Car, color: "#3b82f6" },
+  { key: "Education", label: "Education", icon: GraduationCap, color: "#8b5cf6" },
+  { key: "Business", label: "Business", icon: Briefcase, color: "#ec4899" },
+  { key: "Medical", label: "Medical", icon: Stethoscope, color: "#f59e0b" },
+  { key: "Travel", label: "Travel", icon: Plane, color: "#14b8a6" },
+  { key: "Wedding", label: "Wedding", icon: Heart, color: "#f43f5e" },
+  { key: "Debt consolidation", label: "Debt consolidation", icon: CreditCard, color: "#84cc16" },
 ];
 
 export function LoanPurposeStep() {
@@ -31,78 +29,44 @@ export function LoanPurposeStep() {
   const update = useLoanStore((s) => s.update);
 
   return (
-    <TiltCard className="p-6 sm:p-9" intensity={4}>
+    <div className="w-full rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-9">
       <StepHeader
         title="What's the loan for?"
         subtitle="Pick a purpose — we'll tailor the terms accordingly."
-        badge="Step 4 · Purpose"
+        badge="Step 5 · Purpose"
       />
 
       <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {PURPOSES.map((p, i) => {
+        {PURPOSES.map((p) => {
           const active = purpose === p.key;
           return (
-            <motion.button
+            <button
               key={p.key}
-              initial={{ opacity: 0, y: 16, rotateX: -10 }}
-              animate={{ opacity: 1, y: 0, rotateX: 0 }}
-              transition={{ delay: i * 0.04, type: "spring", stiffness: 200, damping: 18 }}
-              whileHover={{ y: -6, scale: 1.04, rotateY: 4 }}
-              whileTap={{ scale: 0.96 }}
               onClick={() => update({ purpose: p.key })}
-              className="group relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl p-4 text-center"
-              style={{
-                background: active
-                  ? `linear-gradient(135deg, ${p.hue.replace("0.9", "0.22")}, rgba(255,255,255,0.04))`
-                  : "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
-                border: active ? `1px solid ${p.hue}` : "1px solid rgba(255,255,255,0.1)",
-                boxShadow: active
-                  ? `0 10px 30px -8px ${p.hue.replace("0.9", "0.4")}, inset 0 1px 0 rgba(255,255,255,0.1)`
-                  : "inset 0 1px 0 rgba(255,255,255,0.05)",
-                transformStyle: "preserve-3d",
-              }}
+              className={`flex flex-col items-center gap-3 rounded-2xl border p-4 text-center transition-all ${
+                active
+                  ? "border-emerald-500 bg-emerald-50/50 ring-2 ring-emerald-500/10"
+                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+              }`}
             >
-              {/* glow halo on active */}
-              {active && (
-                <motion.span
-                  layoutId="purpose-glow"
-                  className="absolute -inset-2 -z-10 rounded-3xl opacity-60"
-                  style={{ background: p.hue, filter: "blur(24px)" }}
-                />
-              )}
               <div
-                className="flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
-                style={{
-                  background: `linear-gradient(135deg, ${p.hue}, ${p.hue.replace("0.9", "0.5")})`,
-                  boxShadow: `0 6px 18px -4px ${p.hue.replace("0.9", "0.5")}`,
-                }}
+                className="flex h-12 w-12 items-center justify-center rounded-xl"
+                style={{ background: `${p.color}1a` }}
               >
-                <p.icon className="h-6 w-6 text-[#04040a]" strokeWidth={2.2} />
+                <p.icon className="h-6 w-6" style={{ color: p.color }} strokeWidth={2.2} />
               </div>
-              <span className="text-xs font-semibold leading-tight sm:text-sm">{p.label}</span>
-              {active && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute right-2 top-2 h-2 w-2 rounded-full"
-                  style={{ background: p.hue, boxShadow: `0 0 8px ${p.hue}` }}
-                />
-              )}
-            </motion.button>
+              <span className="text-xs font-semibold leading-tight text-gray-800 sm:text-sm">{p.label}</span>
+            </button>
           );
         })}
       </div>
 
       {purpose && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-6 flex items-center gap-2 rounded-xl glass px-4 py-3 text-sm text-muted-foreground"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          Selected: <span className="font-semibold text-foreground">{purpose}</span>
-        </motion.div>
+        <div className="mt-6 flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-3 text-sm text-gray-600">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          Selected: <span className="font-semibold text-gray-900">{purpose}</span>
+        </div>
       )}
-    </TiltCard>
+    </div>
   );
 }
