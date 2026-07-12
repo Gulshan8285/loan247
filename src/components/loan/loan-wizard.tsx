@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
-import { ArrowLeft, ArrowRight, Info, RotateCcw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, ArrowRight, Headset, Info, RotateCcw } from "lucide-react";
 import { isStepValid, useLoanStore } from "@/lib/loan-store";
 import { ProgressTrack } from "./progress-track";
 import { LoanLogo } from "./loan-logo";
+import { SupportModal } from "./support-modal";
 import { WelcomeStep } from "./steps/welcome-step";
 import { GoogleLoginStep } from "./steps/google-login-step";
 import { BasicInfoStep } from "./steps/basic-info-step";
@@ -37,6 +38,7 @@ export function LoanWizard() {
   const goNext = useLoanStore((s) => s.goNext);
   const goBack = useLoanStore((s) => s.goBack);
   const reset = useLoanStore((s) => s.reset);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   // Load any persisted state (returning customer) AFTER mount to avoid SSR
   // hydration mismatches. A returning customer lands on the step they left
@@ -65,15 +67,24 @@ export function LoanWizard() {
               <p className="text-[10px] uppercase tracking-widest text-gray-400">Loans, 24/7</p>
             </div>
           </div>
-          {!isFirst && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={reset}
-              className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
+              onClick={() => setSupportOpen(true)}
+              className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Restart</span>
+              <Headset className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Support</span>
             </button>
-          )}
+            {!isFirst && (
+              <button
+                onClick={reset}
+                className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Restart</span>
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -131,6 +142,9 @@ export function LoanWizard() {
           </div>
         </footer>
       )}
+
+      {/* Support popup — opens from header Support button */}
+      <SupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </div>
   );
 }
