@@ -1,16 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CalendarIcon, User } from "lucide-react";
+import { CalendarIcon, Check, User } from "lucide-react";
 import { useLoanStore } from "@/lib/loan-store";
-import { Field3D, TiltCard } from "../field-3d";
 import { StepHeader } from "./step-header";
 
+/**
+ * BasicInfoStep
+ * Clean, flat, white form matching the reference design (no 3D tilt/glass).
+ * Fields: First Name, Last Name, Date of birth, Pin code, PAN Card number.
+ */
 export function BasicInfoStep() {
   const data = useLoanStore((s) => s.data);
   const update = useLoanStore((s) => s.update);
 
-  // Format DOB for display: iso -> DD-MM-YYYY
   const dobDisplay = data.dob
     ? (() => {
         const d = new Date(data.dob);
@@ -21,8 +24,14 @@ export function BasicInfoStep() {
       })()
     : "";
 
+  // PAN format: 5 letters + 4 digits + 1 letter (ABCDE1234F)
+  const panValid = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(data.panCard);
+
   return (
-    <TiltCard className="p-6 sm:p-9" intensity={5}>
+    <div
+      className="relative w-full overflow-hidden rounded-3xl bg-white p-6 text-neutral-900 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.45)] sm:p-9"
+      style={{ boxShadow: "0 24px 70px -28px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.6) inset" }}
+    >
       <StepHeader
         title="Basic information"
         subtitle="To help us curate the best loan options for you"
@@ -30,37 +39,32 @@ export function BasicInfoStep() {
 
       <div className="mt-7 grid gap-5">
         <div className="grid gap-5 sm:grid-cols-2">
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-            <Field3D
-              label="First Name"
-              hint="(As per PAN)"
-              required
-              placeholder="Enter your first name"
-              icon={<User className="h-4 w-4" />}
-              value={data.firstName}
-              onChange={(e) => update({ firstName: e.target.value })}
-              autoComplete="given-name"
-            />
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <Field3D
-              label="Last Name"
-              hint="(As per PAN)"
-              required
-              placeholder="Enter your last name"
-              value={data.lastName}
-              onChange={(e) => update({ lastName: e.target.value })}
-              autoComplete="family-name"
-            />
-          </motion.div>
+          <FlatField
+            label="First Name"
+            hint="As per PAN"
+            required
+            placeholder="Enter your first name"
+            icon={<User className="h-4 w-4" />}
+            value={data.firstName}
+            onChange={(e) => update({ firstName: e.target.value })}
+            autoComplete="given-name"
+          />
+          <FlatField
+            label="Last Name"
+            hint="As per PAN"
+            required
+            placeholder="Enter your last name"
+            value={data.lastName}
+            onChange={(e) => update({ lastName: e.target.value })}
+            autoComplete="family-name"
+          />
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <DOBField value={data.dob} display={dobDisplay} onChange={(iso) => update({ dob: iso })} />
-        </motion.div>
+        {/* Date of birth */}
+        <DOBField value={data.dob} display={dobDisplay} onChange={(iso) => update({ dob: iso })} />
 
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Field3D
+        <div className="grid gap-5 sm:grid-cols-2">
+          <FlatField
             label="Pin code"
             required
             placeholder="Enter your pincode"
@@ -69,9 +73,92 @@ export function BasicInfoStep() {
             value={data.pincode}
             onChange={(e) => update({ pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })}
           />
-        </motion.div>
+          <FlatField
+            label="PAN Card number"
+            required
+            placeholder="ABCDE1234F"
+            hint="10-character PAN"
+            maxLength={10}
+            value={data.panCard}
+            valid={panValid}
+            onChange={(e) =>
+              update({ panCard: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) })
+            }
+            autoComplete="off"
+          />
+        </div>
+
+        {panValid && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700"
+          >
+            <Check className="h-3.5 w-3.5" strokeWidth={3} />
+            Valid PAN format — we&apos;ll verify this during analysis.
+          </motion.div>
+        )}
       </div>
-    </TiltCard>
+
+      <p className="mt-6 text-center text-[11px] leading-relaxed text-neutral-400">
+        Your data is encrypted &amp; never shared without consent. This won&apos;t affect your credit score.
+      </p>
+    </div>
+  );
+}
+
+function FlatField({
+  label,
+  hint,
+  required,
+  placeholder,
+  icon,
+  prefix,
+  value,
+  onChange,
+  valid,
+  className = "",
+  ...props
+}: {
+  label: string;
+  hint?: string;
+  required?: boolean;
+  placeholder?: string;
+  icon?: React.ReactNode;
+  prefix?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  valid?: boolean;
+  className?: string;
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value" | "size">) {
+  const inputId = label.replace(/\s+/g, "-").toLowerCase();
+  return (
+    <div className="w-full">
+      <label htmlFor={inputId} className="mb-1.5 flex items-baseline gap-1.5 text-sm font-medium text-neutral-800">
+        <span>
+          {label}
+          {required && <span className="text-red-500">*</span>}
+        </span>
+        {hint && <span className="text-xs font-normal text-neutral-400">({hint})</span>}
+      </label>
+      <div className="group relative flex items-center rounded-xl border border-neutral-200 bg-white transition-all focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20 hover:border-neutral-300">
+        {icon && <span className="pl-3.5 text-neutral-400">{icon}</span>}
+        {prefix && <span className="pl-3.5 text-base font-semibold text-neutral-700">{prefix}</span>}
+        <input
+          id={inputId}
+          className={`w-full bg-transparent px-3.5 py-3 text-base text-neutral-900 placeholder:text-neutral-400 focus:outline-none ${icon ? "pl-2" : ""} ${prefix ? "pl-2" : ""} ${className}`}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          {...props}
+        />
+        {valid && (
+          <span className="pr-3.5 text-emerald-500">
+            <Check className="h-4 w-4" strokeWidth={3} />
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -86,43 +173,30 @@ function DOBField({
 }) {
   return (
     <div className="w-full">
-      <label htmlFor="dob" className="mb-2 flex items-center gap-1 text-sm font-medium text-foreground/90">
-        Date of birth <span className="text-rose-400">*</span>
+      <label htmlFor="dob" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-neutral-800">
+        Date of birth <span className="text-red-500">*</span>
       </label>
-      <div className="group relative">
-        <div
-          className="relative flex items-center rounded-2xl transition-all duration-300"
-          style={{
-            background: "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 6px 20px -8px rgba(0,0,0,0.5)",
-          }}
-        >
-          <div
-            className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-focus-within:opacity-100"
-            style={{ boxShadow: "0 0 0 1.5px rgba(52,211,153,0.6), 0 0 22px -2px rgba(34,211,238,0.45)" }}
-          />
-          <CalendarIcon className="ml-3.5 h-4 w-4 text-muted-foreground" />
-          <input
-            id="dob"
-            type="text"
-            readOnly
-            placeholder="DD-MM-YYYY"
-            value={display}
-            className="w-full cursor-pointer bg-transparent px-3 py-3.5 text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
-          />
-          {/* Native date input overlaid for picker */}
-          <input
-            type="date"
-            value={value}
-            max={new Date().toISOString().split("T")[0]}
-            min="1940-01-01"
-            onChange={(e) => onChange(e.target.value)}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-            aria-label="Select date of birth"
-          />
-          <CalendarIcon className="mr-3.5 h-4 w-4 text-aurora" />
-        </div>
+      <div className="group relative flex items-center rounded-xl border border-neutral-200 bg-white transition-all focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20 hover:border-neutral-300">
+        <input
+          id="dob"
+          type="text"
+          readOnly
+          placeholder="DD-MM-YYYY"
+          value={display}
+          className="w-full cursor-pointer bg-transparent px-3.5 py-3 text-base text-neutral-900 placeholder:text-neutral-400 focus:outline-none"
+        />
+        <input
+          type="date"
+          value={value}
+          max={new Date().toISOString().split("T")[0]}
+          min="1940-01-01"
+          onChange={(e) => onChange(e.target.value)}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          aria-label="Select date of birth"
+        />
+        <span className="pr-3.5 text-neutral-700">
+          <CalendarIcon className="h-4 w-4" />
+        </span>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Briefcase, Calendar, IndianRupee, MapPin, Target, User } from "lucide-react";
+import { Briefcase, Calendar, CreditCard, IndianRupee, MapPin, Target, User } from "lucide-react";
 import { formatINR, useLoanStore } from "@/lib/loan-store";
 import { TiltCard } from "../field-3d";
 import { StepHeader } from "./step-header";
@@ -13,6 +13,7 @@ export function ReviewStep() {
     { icon: User, label: "Name", value: [data.firstName, data.lastName].filter(Boolean).join(" ") || "—" },
     { icon: Calendar, label: "Date of birth", value: data.dob ? new Date(data.dob).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—" },
     { icon: MapPin, label: "Pin code", value: data.pincode || "—" },
+    { icon: CreditCard, label: "PAN number", value: data.panCard || "—" },
     { icon: IndianRupee, label: "Loan amount", value: `₹${formatINR(data.loanAmount)}`, highlight: true },
     { icon: Target, label: "Purpose", value: data.purpose || "—" },
     { icon: Briefcase, label: "Occupation", value: data.occupation || "—" },

@@ -18,6 +18,7 @@ export interface LoanFormData {
   lastName: string;
   dob: string; // ISO yyyy-mm-dd
   pincode: string;
+  panCard: string;
   loanAmount: number;
   purpose: LoanPurpose;
   occupation: OccupationType;
@@ -36,13 +37,14 @@ export interface LoanState {
   reset: () => void;
 }
 
-export const TOTAL_STEPS = 8;
+export const TOTAL_STEPS = 9;
 
 const initialData: LoanFormData = {
   firstName: "",
   lastName: "",
   dob: "",
   pincode: "",
+  panCard: "",
   loanAmount: 100000,
   purpose: "",
   occupation: "",

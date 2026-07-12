@@ -7,6 +7,7 @@ import { AuroraBackground } from "./aurora-background";
 import { ProgressTrack } from "./progress-track";
 import { WelcomeStep } from "./steps/welcome-step";
 import { BasicInfoStep } from "./steps/basic-info-step";
+import { AnalyserStep } from "./steps/analyser-step";
 import { LoanAmountStep } from "./steps/loan-amount-step";
 import { LoanPurposeStep } from "./steps/loan-purpose-step";
 import { OccupationStep } from "./steps/occupation-step";
@@ -17,6 +18,7 @@ import { SuccessStep } from "./steps/success-step";
 const STEPS = [
   WelcomeStep,
   BasicInfoStep,
+  AnalyserStep,
   LoanAmountStep,
   LoanPurposeStep,
   OccupationStep,
@@ -35,6 +37,7 @@ export function LoanWizard() {
   const CurrentStep = STEPS[step];
   const isFirst = step === 0;
   const isLast = step === STEPS.length - 1;
+  const isAnalysing = step === 2; // AnalyserStep auto-advances
 
   return (
     <div className="relative flex min-h-screen flex-col">
@@ -93,8 +96,8 @@ export function LoanWizard() {
         </div>
       </main>
 
-      {/* Sticky footer nav (hidden on welcome & success for cleaner hero) */}
-      {!isFirst && !isLast && (
+      {/* Sticky footer nav (hidden on welcome, analyser & success) */}
+      {!isFirst && !isLast && !isAnalysing && (
         <footer className="sticky bottom-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
           <div className="mx-auto flex max-w-3xl items-center gap-3 rounded-2xl glass-strong px-3 py-3 sm:px-4">
             <button

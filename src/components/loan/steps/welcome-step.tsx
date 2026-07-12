@@ -8,7 +8,7 @@ export function WelcomeStep() {
   const goNext = useLoanStore((s) => s.goNext);
 
   const features = [
-    { icon: Zap, title: "60-second journey", desc: "8 smart steps, no paperwork friction" },
+    { icon: Zap, title: "60-second analysis", desc: "9 smart steps, real-time verification" },
     { icon: ShieldCheck, title: "Bank-grade secure", desc: "Your data stays encrypted & private" },
     { icon: Sparkles, title: "Curated offers", desc: "AI matches you to the best lenders" },
   ];
