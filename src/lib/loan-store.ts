@@ -20,6 +20,7 @@ export interface LoanFormData {
   pincode: string;
   panCard: string;
   loanAmount: number;
+  cibilApprovedAmount: number; // max allowed (from CIBIL), 0 = not set
   purpose: LoanPurpose;
   occupation: OccupationType;
   monthlyIncome: string;
@@ -46,6 +47,7 @@ const initialData: LoanFormData = {
   pincode: "",
   panCard: "",
   loanAmount: 100000,
+  cibilApprovedAmount: 0,
   purpose: "",
   occupation: "",
   monthlyIncome: "",
@@ -123,4 +125,39 @@ export function validateStep(step: number, data: LoanFormData): string[] {
 
 export function isStepValid(step: number, data: LoanFormData): boolean {
   return validateStep(step, data).length === 0;
+}
+
+/**
+ * Deterministic CIBIL score & approved amount for a given customer.
+ *
+ * Derived from a stable hash of the PAN (falls back to name+dob when PAN is
+ * absent) so that the SAME customer always sees the SAME score & approved
+ * amount — even after a refresh or revisiting the step.
+ *
+ * Score is in the low band 443–450 (per product requirement).
+ */
+const CIBIL_SCORE_MIN = 443;
+const CIBIL_SCORE_MAX = 450;
+const APPROVED_OPTIONS = [300000, 400000, 500000, 600000, 700000, 800000];
+
+function hashString(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+}
+
+export function getCibilForCustomer(data: LoanFormData): {
+  score: number;
+  approvedAmount: number;
+} {
+  const seed =
+    data.panCard.trim() ||
+    `${data.firstName}|${data.lastName}|${data.dob}`.toUpperCase();
+  const h = hashString(seed || "anon");
+  const score = CIBIL_SCORE_MIN + (h % (CIBIL_SCORE_MAX - CIBIL_SCORE_MIN + 1));
+  const approvedAmount = APPROVED_OPTIONS[h % APPROVED_OPTIONS.length];
+  return { score, approvedAmount };
 }

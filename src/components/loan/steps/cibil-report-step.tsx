@@ -1,40 +1,34 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, ShieldCheck } from "lucide-react";
-import { useLoanStore } from "@/lib/loan-store";
+import { getCibilForCustomer, useLoanStore } from "@/lib/loan-store";
 
 /**
  * CibilReportStep
  * Shown right after the Analyser.
  *
  * 1. A professional semicircular CIBIL gauge whose needle scans while the
- *    score is being "calculated", then settles on a random low score
- *    (443–450) per person.
+ *    score is being "calculated", then settles on the customer's score
+ *    (443–450, low band) — deterministic per PAN, so the SAME customer
+ *    always sees the SAME score, even on refresh.
  * 2. Once revealed: shows the "Low" badge + "Your CIBIL is low, but don't
  *    worry — we're here to help" message.
  * 3. Then reveals "Your loan demand is approved" with an approved amount,
- *    which is written to the store so the Amount page shows the same figure.
- * 4. Auto-advances to the Amount page.
+ *    which is written to the store so the Amount page shows the same figure
+ *    and caps it as the maximum (decrease only).
+ * 4. Auto-advances to the Amount page after a 1-minute analysis.
  */
-export const CIBIL_TIMER_MS = 10_000;
-const SCORE_MIN = 443;
-const SCORE_MAX = 450;
+export const CIBIL_TIMER_MS = 60_000; // 1 minute
 
 export function CibilReportStep() {
   const goNext = useLoanStore((s) => s.goNext);
   const update = useLoanStore((s) => s.update);
-  const firstName = useLoanStore((s) => s.data.firstName);
+  const data = useLoanStore((s) => s.data);
 
-  // Random final score (443–450) and approved amount, generated once per visit
-  const finalScore = useMemo(
-    () => SCORE_MIN + Math.floor(Math.random() * (SCORE_MAX - SCORE_MIN + 1)),
-    [],
-  );
-  const approvedAmount = useMemo(
-    () => (3 + Math.floor(Math.random() * 6)) * 100000, // ₹3,00,000 – ₹8,00,000
-    [],
-  );
+  // Deterministic per customer (PAN-based) — stable across refresh/revisit
+  const { score: finalScore, approvedAmount } = getCibilForCustomer(data);
+  const firstName = data.firstName;
 
   const [progress, setProgress] = useState(0); // 0..100
   const [revealed, setRevealed] = useState(false);
@@ -54,9 +48,9 @@ export function CibilReportStep() {
       if (p < 100) {
         raf = requestAnimationFrame(tick);
       } else {
-        // Score settled — reveal the result, write approved amount to store
+        // Score settled — reveal the result, write approved amount (and cap) to store
         setRevealed(true);
-        update({ loanAmount: approvedAmount });
+        update({ loanAmount: approvedAmount, cibilApprovedAmount: approvedAmount });
         // Let the customer read the approved amount, then advance
         setTimeout(() => goNext(), 2400);
       }
@@ -104,7 +98,10 @@ export function CibilReportStep() {
   const displayScore = revealed ? finalScore : liveScore;
 
   const needle = polar(needleAngle, r - 16);
-  const remaining = Math.max(0, Math.ceil((CIBIL_TIMER_MS * (1 - t)) / 1000));
+  const remainingSec = Math.max(0, Math.ceil((CIBIL_TIMER_MS * (1 - t)) / 1000));
+  const mm = Math.floor(remainingSec / 60);
+  const ss = remainingSec % 60;
+  const remaining = `${mm}:${String(ss).padStart(2, "0")}`;
 
   // Tick marks at 300, 450, 600, 750, 900
   const ticks = [300, 450, 600, 750, 900];
@@ -233,7 +230,7 @@ export function CibilReportStep() {
             </p>
             <div className="mt-3 flex items-center justify-center gap-2">
               <span className="text-4xl font-black tabular-nums text-gray-900">{remaining}</span>
-              <span className="pb-1 text-xs font-medium uppercase tracking-widest text-gray-400">sec</span>
+              <span className="pb-1 text-xs font-medium uppercase tracking-widest text-gray-400">min</span>
             </div>
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200">
               <div
