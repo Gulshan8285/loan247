@@ -1,13 +1,14 @@
 "use client";
 
 import { CalendarIcon, Check, User } from "lucide-react";
-import { useLoanStore } from "@/lib/loan-store";
+import { PAN_REGEX, useLoanStore } from "@/lib/loan-store";
 import { StepHeader } from "./step-header";
 
 /**
  * BasicInfoStep
  * Clean, flat, white form matching the reference design.
  * Fields: First Name, Last Name, Date of birth, Pin code, PAN Card number.
+ * Per-field validation hints appear once the user starts editing a field.
  */
 export function BasicInfoStep() {
   const data = useLoanStore((s) => s.data);
@@ -23,7 +24,11 @@ export function BasicInfoStep() {
       })()
     : "";
 
-  const panValid = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(data.panCard);
+  const panValid = PAN_REGEX.test(data.panCard);
+  // Show PAN format error only after the user has typed something
+  const panError = data.panCard.length > 0 && !panValid ? "Enter a valid 10-character PAN" : undefined;
+  // Pincode error only when partially typed
+  const pinError = data.pincode.length > 0 && data.pincode.length !== 6 ? "Pincode must be 6 digits" : undefined;
 
   return (
     <div className="w-full rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-9">
@@ -65,6 +70,7 @@ export function BasicInfoStep() {
             inputMode="numeric"
             maxLength={6}
             value={data.pincode}
+            error={pinError}
             onChange={(e) => update({ pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })}
           />
           <FlatField
@@ -75,6 +81,7 @@ export function BasicInfoStep() {
             maxLength={10}
             value={data.panCard}
             valid={panValid}
+            error={panError}
             onChange={(e) =>
               update({ panCard: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) })
             }
@@ -107,6 +114,7 @@ function FlatField({
   value,
   onChange,
   valid,
+  error,
   className = "",
   ...props
 }: {
@@ -119,6 +127,7 @@ function FlatField({
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   valid?: boolean;
+  error?: string;
   className?: string;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value" | "size">) {
   const inputId = label.replace(/\s+/g, "-").toLowerCase();
@@ -131,7 +140,13 @@ function FlatField({
         </span>
         {hint && <span className="text-xs font-normal text-gray-400">({hint})</span>}
       </label>
-      <div className="flex items-center rounded-xl border border-gray-200 bg-white transition-all focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20 hover:border-gray-300">
+      <div
+        className={`flex items-center rounded-xl border bg-white transition-all focus-within:ring-2 hover:border-gray-300 ${
+          error
+            ? "border-red-300 focus-within:border-red-400 focus-within:ring-red-400/20"
+            : "border-gray-200 focus-within:border-emerald-400 focus-within:ring-emerald-400/20"
+        }`}
+      >
         {icon && <span className="pl-3.5 text-gray-400">{icon}</span>}
         {prefix && <span className="pl-3.5 text-base font-semibold text-gray-700">{prefix}</span>}
         <input
@@ -148,6 +163,7 @@ function FlatField({
           </span>
         )}
       </div>
+      {error && <p className="mt-1.5 text-xs font-medium text-red-500">{error}</p>}
     </div>
   );
 }

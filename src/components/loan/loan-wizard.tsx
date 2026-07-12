@@ -1,7 +1,7 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, RotateCcw, Sparkles } from "lucide-react";
-import { useLoanStore } from "@/lib/loan-store";
+import { ArrowLeft, ArrowRight, Info, RotateCcw, Sparkles } from "lucide-react";
+import { isStepValid, useLoanStore } from "@/lib/loan-store";
 import { ProgressTrack } from "./progress-track";
 import { WelcomeStep } from "./steps/welcome-step";
 import { BasicInfoStep } from "./steps/basic-info-step";
@@ -27,6 +27,7 @@ const STEPS = [
 
 export function LoanWizard() {
   const step = useLoanStore((s) => s.step);
+  const data = useLoanStore((s) => s.data);
   const goNext = useLoanStore((s) => s.goNext);
   const goBack = useLoanStore((s) => s.goBack);
   const reset = useLoanStore((s) => s.reset);
@@ -35,6 +36,7 @@ export function LoanWizard() {
   const isFirst = step === 0;
   const isLast = step === STEPS.length - 1;
   const isAnalysing = step === 2; // AnalyserStep auto-advances
+  const canProceed = isStepValid(step, data);
 
   return (
     <div className="relative flex min-h-screen flex-col bg-white">
@@ -81,23 +83,32 @@ export function LoanWizard() {
       {/* Sticky footer nav */}
       {!isFirst && !isLast && !isAnalysing && (
         <footer className="sticky bottom-0 z-30 border-t border-gray-100 bg-white/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:px-6">
-          <div className="mx-auto flex max-w-3xl items-center gap-3">
-            <button
-              onClick={goBack}
-              disabled={isFirst}
-              className="flex items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Back</span>
-            </button>
-            <div className="flex-1" />
-            <button
-              onClick={goNext}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-500 px-7 py-3 text-sm font-semibold text-white shadow-sm transition-transform hover:brightness-105 active:scale-[0.98] sm:px-8"
-            >
-              Continue
-              <ArrowRight className="h-4 w-4" />
-            </button>
+          <div className="mx-auto max-w-3xl">
+            {!canProceed && (
+              <p className="mb-2 flex items-center justify-center gap-1.5 text-center text-xs font-medium text-amber-600">
+                <Info className="h-3.5 w-3.5" />
+                Please fill all required fields to continue
+              </p>
+            )}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={goBack}
+                disabled={isFirst}
+                className="flex items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Back</span>
+              </button>
+              <div className="flex-1" />
+              <button
+                onClick={goNext}
+                disabled={!canProceed}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-500 px-7 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100 sm:px-8"
+              >
+                Continue
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </footer>
       )}
