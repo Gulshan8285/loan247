@@ -31,6 +31,7 @@ import { SiteFooter } from "../site-footer";
 export function ApplicationInProcessStep() {
   const data = useLoanStore((s) => s.data);
   const reset = useLoanStore((s) => s.reset);
+  const setSupportOpen = useLoanStore((s) => s.setSupportOpen);
   const refNo = getApplicationRef(data);
   const name = data.firstName || "Customer";
 
@@ -165,7 +166,7 @@ export function ApplicationInProcessStep() {
       </div>
 
       {/* Site footer */}
-      <SiteFooter />
+      <SiteFooter onContactClick={() => setSupportOpen(true)} />
     </div>
   );
 }

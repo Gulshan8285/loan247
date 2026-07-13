@@ -9,6 +9,7 @@ import { SiteFooter } from "../site-footer";
 
 export function WelcomeStep() {
   const goNext = useLoanStore((s) => s.goNext);
+  const setSupportOpen = useLoanStore((s) => s.setSupportOpen);
 
   const trustBadges = [
     { label: "RBI Registered", icon: ShieldCheck },
@@ -112,7 +113,7 @@ export function WelcomeStep() {
       <ReviewsSection />
 
       {/* Site footer */}
-      <SiteFooter />
+      <SiteFooter onContactClick={() => setSupportOpen(true)} />
     </div>
   );
 }

@@ -42,12 +42,14 @@ export interface LoanState {
   direction: 1 | -1;
   data: LoanFormData;
   hydrated: boolean; // true once persisted state has been loaded on the client
+  supportOpen: boolean; // Support modal open state (shared across components)
   setStep: (step: number) => void;
   goNext: () => void;
   goBack: () => void;
   update: (patch: Partial<LoanFormData>) => void;
   reset: () => void;
   hydrate: () => void;
+  setSupportOpen: (open: boolean) => void;
 }
 
 /**
@@ -135,6 +137,7 @@ export const useLoanStore = create<LoanState>((set, get) => ({
   direction: 1,
   data: initialData,
   hydrated: false,
+  supportOpen: false,
   setStep: (step) => {
     set({ step, direction: step >= get().step ? 1 : -1 });
     persistState(get());
@@ -170,6 +173,7 @@ export const useLoanStore = create<LoanState>((set, get) => ({
       set({ hydrated: true });
     }
   },
+  setSupportOpen: (open) => set({ supportOpen: open }),
 }));
 
 export function formatINR(n: number): string {

@@ -1,15 +1,16 @@
 "use client";
 
-import { Mail, MapPin, Phone, ShieldCheck } from "lucide-react";
+import { Headset, ShieldCheck } from "lucide-react";
 import { LoanLogo } from "./loan-logo";
 
 /**
  * SiteFooter
  * The site-wide footer shown on the Welcome and final "Application In Process"
- * pages. Mirrors the reference design: branding + tagline, Quick Links,
- * Legal, and Contact (phone + support@loan247.online).
+ * pages. Contains branding + tagline, Quick Links, Legal, and a "Contact
+ * Support" button that opens the Support modal (contact details live in the
+ * modal, not duplicated here).
  */
-export function SiteFooter() {
+export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) {
   return (
     <footer className="mt-10 border-t border-gray-200 bg-gray-50">
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
@@ -43,7 +44,7 @@ export function SiteFooter() {
                 <a href="#" className="transition-colors hover:text-emerald-600">About Us</a>
               </li>
               <li>
-                <a href="#" className="transition-colors hover:text-emerald-600">Contact Us</a>
+                <a href="#" className="transition-colors hover:text-emerald-600">EMI Calculator</a>
               </li>
             </ul>
           </div>
@@ -58,31 +59,25 @@ export function SiteFooter() {
               <li>
                 <a href="#" className="transition-colors hover:text-emerald-600">Privacy Policy</a>
               </li>
+              <li>
+                <a href="#" className="transition-colors hover:text-emerald-600">Terms of Service</a>
+              </li>
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Support — opens the Support modal (contact details live there) */}
           <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-700">Contact</p>
-            <ul className="space-y-2.5 text-sm text-gray-500">
-              <li className="flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                <span>1800-247-2470</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                <a
-                  href="mailto:support@loan247.online"
-                  className="transition-colors hover:text-emerald-600"
-                >
-                  support@loan247.online
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                <span>Bengaluru, India</span>
-              </li>
-            </ul>
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-700">Need Help?</p>
+            <p className="mb-3 text-xs leading-relaxed text-gray-500">
+              Our support team is available 24/7 to assist you.
+            </p>
+            <button
+              onClick={onContactClick}
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+            >
+              <Headset className="h-3.5 w-3.5" />
+              Contact Support
+            </button>
           </div>
         </div>
 

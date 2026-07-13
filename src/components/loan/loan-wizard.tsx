@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ArrowLeft, ArrowRight, Headset, Info, RotateCcw } from "lucide-react";
 import { isStepValid, useLoanStore } from "@/lib/loan-store";
 import { ProgressTrack } from "./progress-track";
@@ -38,7 +38,8 @@ export function LoanWizard() {
   const goNext = useLoanStore((s) => s.goNext);
   const goBack = useLoanStore((s) => s.goBack);
   const reset = useLoanStore((s) => s.reset);
-  const [supportOpen, setSupportOpen] = useState(false);
+  const supportOpen = useLoanStore((s) => s.supportOpen);
+  const setSupportOpen = useLoanStore((s) => s.setSupportOpen);
 
   // Load any persisted state (returning customer) AFTER mount to avoid SSR
   // hydration mismatches. A returning customer lands on the step they left
