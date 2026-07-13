@@ -12,6 +12,7 @@ import {
   User,
 } from "lucide-react";
 import { formatINR, getApplicationRef, useLoanStore } from "@/lib/loan-store";
+import { SiteFooter } from "../site-footer";
 
 /**
  * ApplicationInProcessStep (terminal)
@@ -162,6 +163,9 @@ export function ApplicationInProcessStep() {
           Start a new application
         </button>
       </div>
+
+      {/* Site footer */}
+      <SiteFooter />
     </div>
   );
 }

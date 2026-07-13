@@ -3,6 +3,8 @@
 import { ArrowRight, Clock, IndianRupee, ShieldCheck, Sparkles, Star, TrendingUp, Zap } from "lucide-react";
 import { useLoanStore } from "@/lib/loan-store";
 import { LoanLogo } from "../loan-logo";
+import { ReviewsSection } from "../reviews-section";
+import { SiteFooter } from "../site-footer";
 
 export function WelcomeStep() {
   const goNext = useLoanStore((s) => s.goNext);
@@ -101,6 +103,12 @@ export function WelcomeStep() {
         <ShieldCheck className="h-3 w-3" />
         RBI Registered NBFC · Bank-grade encryption · No impact on credit score
       </div>
+
+      {/* Customer reviews */}
+      <ReviewsSection />
+
+      {/* Site footer */}
+      <SiteFooter />
     </div>
   );
 }
