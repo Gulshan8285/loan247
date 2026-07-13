@@ -1,16 +1,26 @@
 "use client";
 
 import { Headset, ShieldCheck } from "lucide-react";
+import { type ContentPage, useLoanStore } from "@/lib/loan-store";
 import { LoanLogo } from "./loan-logo";
 
 /**
  * SiteFooter
  * The site-wide footer shown on the Welcome and final "Application In Process"
  * pages. Contains branding + tagline, Quick Links, Legal, and a "Contact
- * Support" button that opens the Support modal (contact details live in the
- * modal, not duplicated here).
+ * Support" button. Each link opens a content popup (About/EMI/Disclaimer/etc)
+ * with an Apply button.
  */
 export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) {
+  const setContentPage = useLoanStore((s) => s.setContentPage);
+
+  function openPage(page: ContentPage) {
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      setContentPage(page);
+    };
+  }
+
   return (
     <footer className="mt-10 border-t border-gray-200 bg-gray-50">
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
@@ -38,13 +48,19 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
             <p className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-700">Quick Links</p>
             <ul className="space-y-2 text-sm text-gray-500">
               <li>
-                <a href="#" className="transition-colors hover:text-emerald-600">Home</a>
+                <a href="#" onClick={openPage("about")} className="transition-colors hover:text-emerald-600">
+                  About Us
+                </a>
               </li>
               <li>
-                <a href="#" className="transition-colors hover:text-emerald-600">About Us</a>
+                <a href="#" onClick={openPage("emi")} className="transition-colors hover:text-emerald-600">
+                  EMI Calculator
+                </a>
               </li>
               <li>
-                <a href="#" className="transition-colors hover:text-emerald-600">EMI Calculator</a>
+                <a href="#" onClick={openPage("about")} className="transition-colors hover:text-emerald-600">
+                  Contact Us
+                </a>
               </li>
             </ul>
           </div>
@@ -54,13 +70,19 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
             <p className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-700">Legal</p>
             <ul className="space-y-2 text-sm text-gray-500">
               <li>
-                <a href="#" className="transition-colors hover:text-emerald-600">Disclaimer</a>
+                <a href="#" onClick={openPage("disclaimer")} className="transition-colors hover:text-emerald-600">
+                  Disclaimer
+                </a>
               </li>
               <li>
-                <a href="#" className="transition-colors hover:text-emerald-600">Privacy Policy</a>
+                <a href="#" onClick={openPage("privacy")} className="transition-colors hover:text-emerald-600">
+                  Privacy Policy
+                </a>
               </li>
               <li>
-                <a href="#" className="transition-colors hover:text-emerald-600">Terms of Service</a>
+                <a href="#" onClick={openPage("terms")} className="transition-colors hover:text-emerald-600">
+                  Terms of Service
+                </a>
               </li>
             </ul>
           </div>

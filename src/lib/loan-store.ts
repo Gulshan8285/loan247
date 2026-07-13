@@ -37,12 +37,15 @@ export interface LoanFormData {
   salaryMode: SalaryMode;
 }
 
+export type ContentPage = "about" | "emi" | "disclaimer" | "privacy" | "terms" | null;
+
 export interface LoanState {
   step: number;
   direction: 1 | -1;
   data: LoanFormData;
   hydrated: boolean; // true once persisted state has been loaded on the client
   supportOpen: boolean; // Support modal open state (shared across components)
+  contentPage: ContentPage; // which content popup is open (about/emi/etc)
   setStep: (step: number) => void;
   goNext: () => void;
   goBack: () => void;
@@ -50,6 +53,7 @@ export interface LoanState {
   reset: () => void;
   hydrate: () => void;
   setSupportOpen: (open: boolean) => void;
+  setContentPage: (page: ContentPage) => void;
 }
 
 /**
@@ -138,6 +142,7 @@ export const useLoanStore = create<LoanState>((set, get) => ({
   data: initialData,
   hydrated: false,
   supportOpen: false,
+  contentPage: null,
   setStep: (step) => {
     set({ step, direction: step >= get().step ? 1 : -1 });
     persistState(get());
@@ -174,6 +179,7 @@ export const useLoanStore = create<LoanState>((set, get) => ({
     }
   },
   setSupportOpen: (open) => set({ supportOpen: open }),
+  setContentPage: (page) => set({ contentPage: page }),
 }));
 
 export function formatINR(n: number): string {

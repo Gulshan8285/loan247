@@ -6,6 +6,7 @@ import { isStepValid, useLoanStore } from "@/lib/loan-store";
 import { ProgressTrack } from "./progress-track";
 import { LoanLogo } from "./loan-logo";
 import { SupportModal } from "./support-modal";
+import { ContentModal } from "./content-modal";
 import { WelcomeStep } from "./steps/welcome-step";
 import { GoogleLoginStep } from "./steps/google-login-step";
 import { BasicInfoStep } from "./steps/basic-info-step";
@@ -146,6 +147,9 @@ export function LoanWizard() {
 
       {/* Support popup — opens from header Support button */}
       <SupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
+
+      {/* Content popup — opens from footer links (About/EMI/Disclaimer/Privacy/Terms) */}
+      <ContentModal />
     </div>
   );
 }
