@@ -18,8 +18,15 @@ export const metadata: Metadata = {
   description: "A clean, simple, multi-step loan application experience built with Next.js.",
   keywords: ["loan", "fintech", "Next.js", "LOAN247", "simple"],
   authors: [{ name: "LOAN247" }],
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "LOAN247",
+  },
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-192.png",
   },
 };
 

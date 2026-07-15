@@ -1,19 +1,29 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Download, ShieldCheck, Smartphone, X } from "lucide-react";
+import { CheckCircle2, Download, Menu, PlusSquare, ShieldCheck, Smartphone, X } from "lucide-react";
 
 type AppDownloadPromptProps = {
   compact?: boolean;
 };
 
-const DOWNLOAD_ENDPOINT = "/api/app-download";
+type InstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
+
+function isRunningStandalone() {
+  if (typeof window === "undefined") return false;
+  const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
+  return window.matchMedia("(display-mode: standalone)").matches || navigatorWithStandalone.standalone === true;
+}
 
 export function AppDownloadPrompt({ compact = false }: AppDownloadPromptProps) {
   const [open, setOpen] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [downloadReady, setDownloadReady] = useState(true);
-  const [downloadStarted, setDownloadStarted] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
+  const [installing, setInstalling] = useState(false);
+  const [installed, setInstalled] = useState(() => isRunningStandalone());
+  const [manualStepsOpen, setManualStepsOpen] = useState(false);
 
   useEffect(() => {
     if (compact) return;
@@ -22,67 +32,75 @@ export function AppDownloadPrompt({ compact = false }: AppDownloadPromptProps) {
   }, [compact]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function checkDownload() {
-      try {
-        const response = await fetch(DOWNLOAD_ENDPOINT, {
-          method: "HEAD",
-          cache: "no-store",
-          redirect: "manual",
-        });
-        if (!cancelled) {
-          setDownloadReady(response.ok || response.type === "opaqueredirect" || response.status === 302);
-        }
-      } catch {
-        if (!cancelled) {
-          setDownloadReady(false);
-        }
-      } finally {
-        if (!cancelled) {
-          setChecking(false);
-        }
-      }
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     }
 
-    checkDownload();
+    function handleBeforeInstallPrompt(event: Event) {
+      event.preventDefault();
+      setInstallPrompt(event as InstallPromptEvent);
+    }
+
+    function handleInstalled() {
+      setInstalled(true);
+      setInstallPrompt(null);
+      setManualStepsOpen(false);
+    }
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleInstalled);
 
     return () => {
-      cancelled = true;
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstalled);
     };
   }, []);
 
+  const canInstall = Boolean(installPrompt) && !installed;
+
   const statusText = useMemo(() => {
-    if (checking) return "Preparing your app download...";
-    if (downloadReady) return "Your app download is ready";
-    return "Download is ready";
-  }, [checking, downloadReady]);
+    if (installed) return "LOAN247 is already available in app mode";
+    if (canInstall) return "Your LOAN247 app is ready to install";
+    return "Install LOAN247 from your browser menu";
+  }, [canInstall, installed]);
 
-  function startDownload() {
-    if (checking) return;
+  async function startInstall() {
+    if (installed) {
+      setOpen(false);
+      return;
+    }
 
-    setDownloadStarted(true);
+    if (!installPrompt) {
+      setManualStepsOpen(true);
+      setOpen(true);
+      return;
+    }
 
-    const link = document.createElement("a");
-    link.href = DOWNLOAD_ENDPOINT;
-    link.download = "loan247.apk";
-    link.rel = "noopener";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    setInstalling(true);
+    try {
+      await installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      if (choice.outcome === "accepted") {
+        setInstalled(true);
+        setOpen(false);
+      }
+      setInstallPrompt(null);
+    } finally {
+      setInstalling(false);
+    }
   }
 
   const downloadButton = (
     <button
       type="button"
-      onClick={startDownload}
-      disabled={checking}
+      onClick={startInstall}
+      disabled={installing}
       className={`inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 ${
         compact ? "px-3 py-2" : "w-full px-5 py-3"
       }`}
     >
       <Download className="h-4 w-4" />
-      Download App
+      {installing ? "Installing..." : installed ? "App Installed" : "Download App"}
     </button>
   );
 
@@ -119,7 +137,7 @@ export function AppDownloadPrompt({ compact = false }: AppDownloadPromptProps) {
               </div>
               <h2 className="pr-10 text-2xl font-bold tracking-tight text-gray-950">LOAN247 App Download</h2>
               <p className="mt-2 text-sm leading-6 text-gray-600">
-                Download the LOAN247 app to continue your loan application faster. Tap the button and the download will start automatically.
+                Install LOAN247 on your phone or desktop. It opens in a clean app window, without browser tabs, and keeps your loan journey fast.
               </p>
             </div>
 
@@ -141,7 +159,7 @@ export function AppDownloadPrompt({ compact = false }: AppDownloadPromptProps) {
                 <span className="text-xs font-medium text-gray-500">{statusText}</span>
                 <span
                   className={`h-2.5 w-2.5 rounded-full ${
-                    checking ? "bg-amber-400" : downloadReady ? "bg-emerald-500" : "bg-red-400"
+                    installed || canInstall ? "bg-emerald-500" : "bg-amber-400"
                   }`}
                 />
               </div>
@@ -157,10 +175,19 @@ export function AppDownloadPrompt({ compact = false }: AppDownloadPromptProps) {
                 </button>
               </div>
 
-              {downloadStarted && (
-                <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
-                  Download started. If your browser asks, choose Allow or Keep to save the file.
-                </p>
+              {manualStepsOpen && !installed && (
+                <div className="space-y-2 rounded-xl bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-800">
+                  <p className="font-semibold text-amber-900">If the install popup does not appear:</p>
+                  <p className="flex gap-2">
+                    <Menu className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    Open your browser menu.
+                  </p>
+                  <p className="flex gap-2">
+                    <PlusSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    Choose <span className="font-semibold">Install app</span> or{" "}
+                    <span className="font-semibold">Add to Home Screen</span>.
+                  </p>
+                </div>
               )}
             </div>
           </div>

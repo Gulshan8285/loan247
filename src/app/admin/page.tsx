@@ -1,0 +1,255 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { BadgeIndianRupee, Lock, RefreshCw, Search, ShieldCheck, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import type { LoanApplicationRecord } from "@/lib/application-store";
+import { formatINR } from "@/lib/loan-store";
+
+type AdminResponse = {
+  ok: boolean;
+  error?: string;
+  applications?: LoanApplicationRecord[];
+  stats?: {
+    total: number;
+    paid: number;
+    paymentOpened: number;
+    cancelled: number;
+    totalPaidAmount: number;
+  };
+};
+
+function statusLabel(status: LoanApplicationRecord["paymentStatus"]) {
+  if (status === "paid") return "Paid";
+  if (status === "cancelled") return "Cancelled";
+  return "Payment opened";
+}
+
+function statusClass(status: LoanApplicationRecord["paymentStatus"]) {
+  if (status === "paid") return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  if (status === "cancelled") return "border-amber-200 bg-amber-50 text-amber-700";
+  return "border-blue-200 bg-blue-50 text-blue-700";
+}
+
+function maskAccount(accountNumber: string) {
+  if (!accountNumber) return "-";
+  return accountNumber.length > 4 ? `****${accountNumber.slice(-4)}` : accountNumber;
+}
+
+export default function AdminPage() {
+  const [password, setPassword] = useState(() =>
+    typeof window === "undefined" ? "" : sessionStorage.getItem("loan247-admin-password") || "",
+  );
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [applications, setApplications] = useState<LoanApplicationRecord[]>([]);
+  const [stats, setStats] = useState<AdminResponse["stats"]>();
+
+  async function loadApplications(nextPassword = password) {
+    if (!nextPassword) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/admin/applications", {
+        cache: "no-store",
+        headers: {
+          "x-admin-password": nextPassword,
+        },
+      });
+      const payload = (await response.json()) as AdminResponse;
+
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "Unable to load admin data");
+      }
+
+      sessionStorage.setItem("loan247-admin-password", nextPassword);
+      setApplications(payload.applications || []);
+      setStats(payload.stats);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load admin data");
+      setApplications([]);
+      setStats(undefined);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const filteredApplications = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return applications;
+
+    return applications.filter((application) => {
+      const data = application.data;
+      return [
+        application.reference,
+        data.firstName,
+        data.lastName,
+        data.googleEmail,
+        data.panCard,
+        data.pincode,
+        data.bankName,
+        data.ifscCode,
+        application.paymentStatus,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle);
+    });
+  }, [applications, query]);
+
+  const statCards = [
+    { label: "Total applications", value: stats?.total ?? 0, icon: Users },
+    { label: "Paid payments", value: stats?.paid ?? 0, icon: ShieldCheck },
+    { label: "Payment opened", value: stats?.paymentOpened ?? 0, icon: RefreshCw },
+    {
+      label: "Paid amount",
+      value: `₹${formatINR(stats?.totalPaidAmount ?? 0)}`,
+      icon: BadgeIndianRupee,
+    },
+  ];
+
+  return (
+    <main className="min-h-screen bg-gray-50 px-4 py-6 text-gray-950 sm:px-6">
+      <div className="mx-auto max-w-7xl space-y-5">
+        <header className="flex flex-col justify-between gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
+              LOAN247 Admin
+            </p>
+            <h1 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">
+              Applications Dashboard
+            </h1>
+          </div>
+          <div className="flex flex-col gap-2 sm:w-[420px] sm:flex-row">
+            <div className="relative flex-1">
+              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void loadApplications();
+                }}
+                placeholder="Admin password"
+                className="h-11 rounded-xl bg-white pl-10"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={() => loadApplications()}
+              disabled={loading || !password}
+              className="h-11 rounded-xl bg-emerald-600 px-5 text-white hover:bg-emerald-700"
+            >
+              {loading ? "Loading..." : "Unlock"}
+            </Button>
+          </div>
+        </header>
+
+        {error && (
+          <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            {error}
+          </div>
+        )}
+
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {statCards.map((card) => (
+            <div key={card.label} className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {card.label}
+                </p>
+                <card.icon className="h-4 w-4 text-emerald-600" />
+              </div>
+              <p className="mt-3 text-2xl font-black tracking-tight">{card.value}</p>
+            </div>
+          ))}
+        </section>
+
+        <section className="rounded-xl border border-gray-200 bg-white">
+          <div className="flex flex-col gap-3 border-b border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-base font-bold">Applicant Data</h2>
+              <p className="text-xs text-gray-500">
+                Shows customers who opened payment, cancelled, or marked payment as paid.
+              </p>
+            </div>
+            <div className="relative sm:w-80">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search name, PAN, email, bank..."
+                className="h-10 rounded-xl pl-10"
+              />
+            </div>
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Reference</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>PAN</TableHead>
+                <TableHead>Loan</TableHead>
+                <TableHead>Bank</TableHead>
+                <TableHead>Account</TableHead>
+                <TableHead>IFSC</TableHead>
+                <TableHead>Updated</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredApplications.map((application) => (
+                <TableRow key={application.id}>
+                  <TableCell className="font-semibold">{application.reference}</TableCell>
+                  <TableCell>
+                    <Badge className={statusClass(application.paymentStatus)} variant="outline">
+                      {statusLabel(application.paymentStatus)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {[application.data.firstName, application.data.lastName].filter(Boolean).join(" ") ||
+                      "-"}
+                  </TableCell>
+                  <TableCell>{application.data.googleEmail || "-"}</TableCell>
+                  <TableCell>{application.data.panCard || "-"}</TableCell>
+                  <TableCell>₹{formatINR(application.data.loanAmount || 0)}</TableCell>
+                  <TableCell>{application.data.bankName || "-"}</TableCell>
+                  <TableCell>{maskAccount(application.data.accountNumber)}</TableCell>
+                  <TableCell>{application.data.ifscCode || "-"}</TableCell>
+                  <TableCell>
+                    {new Date(application.updatedAt).toLocaleString("en-IN", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!filteredApplications.length && (
+                <TableRow>
+                  <TableCell className="py-10 text-center text-sm text-gray-500" colSpan={10}>
+                    {applications.length ? "No matching applications found." : "No applications found yet."}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </section>
+      </div>
+    </main>
+  );
+}
