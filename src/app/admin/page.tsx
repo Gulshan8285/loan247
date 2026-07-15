@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BadgeIndianRupee,
   Download,
+  Eye,
+  EyeOff,
   FileJson,
   KeyRound,
   Lock,
@@ -109,6 +111,9 @@ export default function AdminPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [applications, setApplications] = useState<LoanApplicationRecord[]>([]);
   const [stats, setStats] = useState<AdminResponse["stats"]>();
   const [passwordForm, setPasswordForm] = useState({
@@ -251,15 +256,24 @@ export default function AdminPage() {
             <div className="relative flex-1">
               <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") void loadApplications();
                 }}
                 placeholder="Admin password"
-                className="h-11 rounded-xl bg-white pl-10"
+                className="h-11 rounded-xl bg-white pl-10 pr-10"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
             <Button
               type="button"
@@ -306,24 +320,46 @@ export default function AdminPage() {
               className="h-11 rounded-xl"
               placeholder="Authorized email"
             />
-            <Input
-              type="password"
-              value={passwordForm.currentPassword}
-              onChange={(event) =>
-                setPasswordForm((form) => ({ ...form, currentPassword: event.target.value }))
-              }
-              className="h-11 rounded-xl"
-              placeholder="Current password"
-            />
-            <Input
-              type="password"
-              value={passwordForm.newPassword}
-              onChange={(event) =>
-                setPasswordForm((form) => ({ ...form, newPassword: event.target.value }))
-              }
-              className="h-11 rounded-xl"
-              placeholder="New password"
-            />
+            <div className="relative">
+              <Input
+                type={showCurrentPassword ? "text" : "password"}
+                value={passwordForm.currentPassword}
+                onChange={(event) =>
+                  setPasswordForm((form) => ({ ...form, currentPassword: event.target.value }))
+                }
+                className="h-11 rounded-xl pr-10"
+                placeholder="Current password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword((visible) => !visible)}
+                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+                title={showCurrentPassword ? "Hide current password" : "Show current password"}
+              >
+                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <div className="relative">
+              <Input
+                type={showNewPassword ? "text" : "password"}
+                value={passwordForm.newPassword}
+                onChange={(event) =>
+                  setPasswordForm((form) => ({ ...form, newPassword: event.target.value }))
+                }
+                className="h-11 rounded-xl pr-10"
+                placeholder="New password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword((visible) => !visible)}
+                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                title={showNewPassword ? "Hide new password" : "Show new password"}
+              >
+                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             <Button
               type="button"
               onClick={changePassword}
