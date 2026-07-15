@@ -25,7 +25,7 @@ const REVIEWS: Review[] = [
     name: "Rajesh Kumar",
     location: "Mumbai, Maharashtra",
     time: "2 days ago",
-    text: "Bahut accha service! Loan approval mein sirf 5 minute laga. Emergency mein bahut helpful raha. Highly recommended!",
+    text: "Excellent service. My loan was approved in just 5 minutes and it was very helpful during an emergency. Highly recommended.",
     loan: 75000,
   },
   {
@@ -33,7 +33,7 @@ const REVIEWS: Review[] = [
     name: "Priya Sharma",
     location: "Delhi",
     time: "1 week ago",
-    text: "Process bahut simple hai. Koi hidden charges nahi. Staff cooperative hai. EMI calculation bhi accurate mila.",
+    text: "The process was very simple. There were no hidden charges, the staff was cooperative, and the EMI calculation was accurate.",
     loan: 100000,
   },
   {
@@ -41,7 +41,7 @@ const REVIEWS: Review[] = [
     name: "Mohammed Raza",
     location: "Hyderabad, Telangana",
     time: "3 days ago",
-    text: "Medical emergency ke liye loan chahiye tha. Same day approval mil gaya. Bahut shukriya LOAN247 team ka!",
+    text: "I needed a loan for a medical emergency and received same-day approval. Thank you to the LOAN247 team.",
     loan: 50000,
   },
   {
@@ -49,7 +49,7 @@ const REVIEWS: Review[] = [
     name: "Anita Devi",
     location: "Patna, Bihar",
     time: "5 days ago",
-    text: "Pehle thoda doubt tha par sab genuine nikla. Interest rate bhi reasonable hai. Ab regular customer hoon.",
+    text: "I was unsure at first, but the service felt genuine. The interest rate was reasonable and I would use it again.",
     loan: 80000,
   },
   {
@@ -57,7 +57,7 @@ const REVIEWS: Review[] = [
     name: "Suresh Patil",
     location: "Pune, Maharashtra",
     time: "1 day ago",
-    text: "Business ke liye urgent fund chahiye tha. LOAN247 ne bahut jaldi help ki. Documentation bhi minimal tha.",
+    text: "I needed urgent funds for my business. LOAN247 helped quickly and the documentation was minimal.",
     loan: 150000,
   },
   {
@@ -65,7 +65,7 @@ const REVIEWS: Review[] = [
     name: "Kavitha Nair",
     location: "Kochi, Kerala",
     time: "4 days ago",
-    text: "Customer support bahut accha hai. Har sawal ka jawab mila. Loan disbursement bhi time par hua.",
+    text: "Customer support was very good. Every question was answered clearly and the loan disbursement was on time.",
     loan: 60000,
   },
 ];

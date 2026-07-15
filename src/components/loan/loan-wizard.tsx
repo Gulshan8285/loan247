@@ -7,6 +7,7 @@ import { ProgressTrack } from "./progress-track";
 import { LoanLogo } from "./loan-logo";
 import { SupportModal } from "./support-modal";
 import { ContentModal } from "./content-modal";
+import { AppDownloadPrompt } from "./app-download-prompt";
 import { WelcomeStep } from "./steps/welcome-step";
 import { GoogleLoginStep } from "./steps/google-login-step";
 import { BasicInfoStep } from "./steps/basic-info-step";
@@ -70,6 +71,9 @@ export function LoanWizard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <div className="hidden sm:block">
+              <AppDownloadPrompt compact />
+            </div>
             <button
               onClick={() => setSupportOpen(true)}
               className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
@@ -150,6 +154,9 @@ export function LoanWizard() {
 
       {/* Content popup — opens from footer links (About/EMI/Disclaimer/Privacy/Terms) */}
       <ContentModal />
+
+      {/* App download popup — shown automatically when the website opens */}
+      <AppDownloadPrompt />
     </div>
   );
 }
