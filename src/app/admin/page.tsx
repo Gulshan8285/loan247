@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BadgeIndianRupee, KeyRound, Lock, RefreshCw, Search, ShieldCheck, Users } from "lucide-react";
+import {
+  BadgeIndianRupee,
+  Download,
+  FileJson,
+  KeyRound,
+  Lock,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +49,57 @@ function statusClass(status: LoanApplicationRecord["paymentStatus"]) {
   if (status === "paid") return "border-emerald-200 bg-emerald-50 text-emerald-700";
   if (status === "rejected") return "border-amber-200 bg-amber-50 text-amber-700";
   return "border-blue-200 bg-blue-50 text-blue-700";
+}
+
+function csvEscape(value: unknown) {
+  const text = String(value ?? "");
+  if (/[",\n]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+}
+
+function exportRows(applications: LoanApplicationRecord[]) {
+  return applications.map((application) => ({
+    reference: application.reference,
+    status: application.paymentStatus,
+    createdAt: application.createdAt,
+    updatedAt: application.updatedAt,
+    paymentAmount: application.paymentAmount,
+    paymentProvider: application.paymentProvider,
+    paymentLink: application.paymentLink,
+    firstName: application.data.firstName,
+    lastName: application.data.lastName,
+    email: application.data.googleEmail,
+    phone: application.data.phone,
+    address: application.data.address,
+    dob: application.data.dob,
+    pincode: application.data.pincode,
+    panCard: application.data.panCard,
+    loanAmount: application.data.loanAmount,
+    cibilApprovedAmount: application.data.cibilApprovedAmount,
+    accountHolderName: application.data.accountHolderName,
+    accountNumber: application.data.accountNumber,
+    ifscCode: application.data.ifscCode,
+    bankName: application.data.bankName,
+    branch: application.data.branch,
+    purpose: application.data.purpose,
+    occupation: application.data.occupation,
+    monthlyIncome: application.data.monthlyIncome,
+    salaryMode: application.data.salaryMode,
+  }));
+}
+
+function downloadBlob(filename: string, content: string, type: string) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 export default function AdminPage() {
@@ -152,6 +213,28 @@ export default function AdminPage() {
     }
   }
 
+  function downloadData(format: "json" | "csv") {
+    const rows = exportRows(applications);
+    const date = new Date().toISOString().slice(0, 10);
+
+    if (format === "json") {
+      downloadBlob(
+        `loan247-applications-${date}.json`,
+        JSON.stringify(applications, null, 2),
+        "application/json",
+      );
+      return;
+    }
+
+    const headers = Object.keys(rows[0] || {});
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) => headers.map((header) => csvEscape(row[header as keyof typeof row])).join(",")),
+    ].join("\n");
+
+    downloadBlob(`loan247-applications-${date}.csv`, csv, "text/csv;charset=utf-8");
+  }
+
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-6 text-gray-950 sm:px-6">
       <div className="mx-auto max-w-7xl space-y-5">
@@ -263,17 +346,39 @@ export default function AdminPage() {
             <div>
               <h2 className="text-base font-bold">Applicant Data</h2>
               <p className="text-xs text-gray-500">
-                Shows customers who opened payment, cancelled, or marked payment as paid.
+                Records are retained in private storage and are not deletable from this panel.
               </p>
             </div>
-            <div className="relative sm:w-80">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search name, PAN, email, bank..."
-                className="h-10 rounded-xl pl-10"
-              />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Button
+                type="button"
+                onClick={() => downloadData("csv")}
+                disabled={!applications.length}
+                variant="outline"
+                className="h-10 rounded-xl"
+              >
+                <Download className="h-4 w-4" />
+                CSV
+              </Button>
+              <Button
+                type="button"
+                onClick={() => downloadData("json")}
+                disabled={!applications.length}
+                variant="outline"
+                className="h-10 rounded-xl"
+              >
+                <FileJson className="h-4 w-4" />
+                JSON
+              </Button>
+              <div className="relative sm:w-80">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search name, PAN, email, bank..."
+                  className="h-10 rounded-xl pl-10"
+                />
+              </div>
             </div>
           </div>
 
