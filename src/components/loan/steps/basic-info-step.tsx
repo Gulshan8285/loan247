@@ -1,13 +1,13 @@
 "use client";
 
-import { CalendarIcon, Check, User } from "lucide-react";
+import { CalendarIcon, Check, Home, Phone, User } from "lucide-react";
 import { PAN_REGEX, useLoanStore } from "@/lib/loan-store";
 import { StepHeader } from "./step-header";
 
 /**
  * BasicInfoStep
  * Clean, flat, white form matching the reference design.
- * Fields: First Name, Last Name, Date of birth, Pin code, PAN Card number.
+ * Fields: First Name, Last Name, Date of birth, Phone, Address, Pin code, PAN Card number.
  * Per-field validation hints appear once the user starts editing a field.
  */
 export function BasicInfoStep() {
@@ -29,6 +29,10 @@ export function BasicInfoStep() {
   const panError = data.panCard.length > 0 && !panValid ? "Enter a valid 10-character PAN" : undefined;
   // Pincode error only when partially typed
   const pinError = data.pincode.length > 0 && data.pincode.length !== 6 ? "Pincode must be 6 digits" : undefined;
+  const phoneError =
+    data.phone.length > 0 && data.phone.replace(/\D/g, "").length !== 10
+      ? "Enter a valid 10-digit mobile number"
+      : undefined;
 
   return (
     <div className="w-full rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-9">
@@ -61,6 +65,34 @@ export function BasicInfoStep() {
         </div>
 
         <DOBField value={data.dob} display={dobDisplay} onChange={(iso) => update({ dob: iso })} />
+
+        <FlatField
+          label="Mobile number"
+          required
+          placeholder="Enter your mobile number"
+          inputMode="numeric"
+          maxLength={10}
+          icon={<Phone className="h-4 w-4" />}
+          value={data.phone}
+          error={phoneError}
+          onChange={(e) => update({ phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+          autoComplete="tel"
+        />
+
+        <FlatField
+          label="Full address"
+          required
+          placeholder="House number, street, city, state"
+          icon={<Home className="h-4 w-4" />}
+          value={data.address}
+          error={
+            data.address.length > 0 && data.address.trim().length < 8
+              ? "Enter your complete address"
+              : undefined
+          }
+          onChange={(e) => update({ address: e.target.value })}
+          autoComplete="street-address"
+        />
 
         <div className="grid gap-5 sm:grid-cols-2">
           <FlatField

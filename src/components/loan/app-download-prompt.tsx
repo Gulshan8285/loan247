@@ -15,7 +15,11 @@ type InstallPromptEvent = Event & {
 function isRunningStandalone() {
   if (typeof window === "undefined") return false;
   const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
-  return window.matchMedia("(display-mode: standalone)").matches || navigatorWithStandalone.standalone === true;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    navigatorWithStandalone.standalone === true ||
+    localStorage.getItem("loan247-app-installed") === "true"
+  );
 }
 
 export function AppDownloadPrompt({ compact = false }: AppDownloadPromptProps) {
@@ -42,6 +46,7 @@ export function AppDownloadPrompt({ compact = false }: AppDownloadPromptProps) {
     }
 
     function handleInstalled() {
+      localStorage.setItem("loan247-app-installed", "true");
       setInstalled(true);
       setInstallPrompt(null);
       setManualStepsOpen(false);
@@ -81,6 +86,7 @@ export function AppDownloadPrompt({ compact = false }: AppDownloadPromptProps) {
       await installPrompt.prompt();
       const choice = await installPrompt.userChoice;
       if (choice.outcome === "accepted") {
+        localStorage.setItem("loan247-app-installed", "true");
         setInstalled(true);
         setOpen(false);
       }
@@ -88,6 +94,10 @@ export function AppDownloadPrompt({ compact = false }: AppDownloadPromptProps) {
     } finally {
       setInstalling(false);
     }
+  }
+
+  if (installed) {
+    return null;
   }
 
   const downloadButton = (

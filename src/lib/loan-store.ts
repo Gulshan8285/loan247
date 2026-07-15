@@ -17,6 +17,8 @@ export interface LoanFormData {
   firstName: string;
   lastName: string;
   dob: string; // ISO yyyy-mm-dd
+  phone: string;
+  address: string;
   pincode: string;
   panCard: string;
   loanAmount: number;
@@ -75,6 +77,8 @@ const initialData: LoanFormData = {
   firstName: "",
   lastName: "",
   dob: "",
+  phone: "",
+  address: "",
   pincode: "",
   panCard: "",
   loanAmount: 100000,
@@ -201,6 +205,8 @@ export function validateStep(step: number, data: LoanFormData): string[] {
       if (!data.firstName.trim()) errs.push("firstName");
       if (!data.lastName.trim()) errs.push("lastName");
       if (!data.dob) errs.push("dob");
+      if (data.phone.replace(/\D/g, "").length !== 10) errs.push("phone");
+      if (data.address.trim().length < 8) errs.push("address");
       if (data.pincode.length !== 6) errs.push("pincode");
       if (!PAN_REGEX.test(data.panCard)) errs.push("panCard");
       return errs;

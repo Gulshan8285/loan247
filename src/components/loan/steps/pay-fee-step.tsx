@@ -18,23 +18,21 @@ import { StepHeader } from "./step-header";
  * Because the customer's CIBIL is low, a one-time processing fee of ₹59 is
  * required. The "Pay ₹59 now" button opens the Razorpay payment link in a new tab.
  *
- * After the link opens, the customer must indicate the outcome:
- *  - "Payment done"     → advances to the final "Application In Process" screen
- *  - "Payment cancelled" → shows a cancelled state with a "Try again" button
- *
- * This correctly reflects the payment status instead of always confirming.
+ * After the link opens, payment status is read from the backend. The customer
+ * cannot self-mark payment as successful.
  */
 const FEE_AMOUNT = 59;
 const RAZORPAY_LINK =
   "https://razorpay.me/@thepropertygallery?amount=t6b98btveFupXVKHk6kwug%3D%3D";
 
-type Phase = "idle" | "opened" | "paid" | "cancelled";
+type Phase = "idle" | "waiting" | "paid" | "rejected";
 
 export function PayFeeStep() {
   const goNext = useLoanStore((s) => s.goNext);
   const data = useLoanStore((s) => s.data);
   const [phase, setPhase] = useState<Phase>("idle");
   const [saving, setSaving] = useState(false);
+  const reference = getApplicationRef(data);
 
   // After the customer confirms payment is done, advance to the final screen.
   useEffect(() => {
@@ -43,7 +41,33 @@ export function PayFeeStep() {
     return () => clearTimeout(id);
   }, [phase, goNext]);
 
-  async function saveApplication(paymentStatus: "payment_opened" | "paid" | "cancelled") {
+  useEffect(() => {
+    if (phase !== "waiting") return;
+
+    const poll = window.setInterval(async () => {
+      try {
+        const response = await fetch(`/api/applications?reference=${encodeURIComponent(reference)}`, {
+          cache: "no-store",
+        });
+        const payload = await response.json();
+        const status = payload?.application?.paymentStatus;
+
+        if (status === "paid") {
+          setPhase("paid");
+        }
+
+        if (status === "rejected") {
+          setPhase("rejected");
+        }
+      } catch {
+        /* keep waiting */
+      }
+    }, 3500);
+
+    return () => window.clearInterval(poll);
+  }, [phase, reference]);
+
+  async function saveApplication(paymentStatus: "pending" | "paid" | "rejected") {
     setSaving(true);
     try {
       await fetch("/api/applications", {
@@ -52,7 +76,7 @@ export function PayFeeStep() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          reference: getApplicationRef(data),
+          reference,
           paymentStatus,
           paymentAmount: FEE_AMOUNT,
           paymentProvider: "Razorpay",
@@ -66,19 +90,9 @@ export function PayFeeStep() {
   }
 
   function handleOpenPayment() {
-    void saveApplication("payment_opened");
+    void saveApplication("pending");
     window.open(RAZORPAY_LINK, "_blank", "noopener,noreferrer");
-    setPhase("opened");
-  }
-
-  async function handlePaid() {
-    await saveApplication("paid");
-    setPhase("paid");
-  }
-
-  async function handleCancelled() {
-    await saveApplication("cancelled");
-    setPhase("cancelled");
+    setPhase("waiting");
   }
 
   function handleRetry() {
@@ -102,8 +116,8 @@ export function PayFeeStep() {
           </p>
           <p className="mt-0.5 text-xs text-gray-500">
             Because your credit profile is in the low band, we charge a small ₹{FEE_AMOUNT} verification
-            &amp; processing fee to continue with the best lender match. This is fully refundable if your
-            loan isn&apos;t disbursed.
+            &amp; processing fee to continue with the best lender match. This fee is non-refundable except
+            where required by applicable law.
           </p>
         </div>
       </div>
@@ -117,7 +131,7 @@ export function PayFeeStep() {
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-900">Processing fee</p>
-              <p className="text-xs text-gray-500">One-time · Refundable</p>
+              <p className="text-xs text-gray-500">One-time · Non-refundable</p>
             </div>
           </div>
           <p className="text-2xl font-black text-gray-900">₹{FEE_AMOUNT}</p>
@@ -134,24 +148,25 @@ export function PayFeeStep() {
         {phase === "idle" && (
           <button
             onClick={handleOpenPayment}
+            disabled={saving}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-500 px-6 py-4 text-base font-bold text-white shadow-sm transition-transform hover:brightness-105 active:scale-[0.98]"
           >
             <Lock className="h-4 w-4" />
-            Pay ₹{FEE_AMOUNT} now
+            {saving ? "Preparing payment..." : `Pay ₹${FEE_AMOUNT} now`}
           </button>
         )}
 
-        {/* OPENED: link opened, ask customer for the outcome */}
-        {phase === "opened" && (
+        {/* WAITING: link opened, backend confirms payment automatically */}
+        {phase === "waiting" && (
           <>
             <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
               <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
               <div className="text-left">
                 <p className="text-sm font-semibold text-gray-900">
-                  Payment page opened in a new tab.
+                  Payment page opened in a new tab
                 </p>
                 <p className="mt-0.5 text-xs text-gray-500">
-                  Complete the ₹{FEE_AMOUNT} payment there, then tell us the result below.
+                  Complete the ₹{FEE_AMOUNT} payment there. This page will continue automatically after payment confirmation.
                   Didn&apos;t open?{" "}
                   <a
                     href={RAZORPAY_LINK}
@@ -164,23 +179,12 @@ export function PayFeeStep() {
                 </p>
               </div>
             </div>
-            {/* Two outcome buttons: done vs cancelled */}
-            <button
-              onClick={handlePaid}
-              disabled={saving}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-500 px-6 py-4 text-base font-bold text-white shadow-sm transition-transform hover:brightness-105 active:scale-[0.98]"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              {saving ? "Saving..." : "Payment done — continue"}
-            </button>
-            <button
-              onClick={handleCancelled}
-              disabled={saving}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50"
-            >
-              <XCircle className="h-4 w-4" />
-              Payment cancelled
-            </button>
+            <div className="flex items-center justify-center gap-2 rounded-xl border border-blue-100 bg-white px-6 py-4 text-blue-700">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
+              <span className="text-sm font-semibold">
+                Waiting for Razorpay confirmation...
+              </span>
+            </div>
           </>
         )}
 
@@ -192,13 +196,13 @@ export function PayFeeStep() {
           </div>
         )}
 
-        {/* CANCELLED: show cancelled, offer retry */}
-        {phase === "cancelled" && (
+        {/* REJECTED: show rejected/failed, offer retry */}
+        {phase === "rejected" && (
           <>
             <div className="flex items-center justify-center gap-2 rounded-xl border border-amber-100 bg-amber-50/60 px-6 py-4 text-amber-700">
               <XCircle className="h-5 w-5" />
               <span className="text-sm font-semibold">
-                Payment cancelled. You haven&apos;t been charged.
+                Payment was not confirmed. Please try again.
               </span>
             </div>
             <button

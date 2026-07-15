@@ -3,7 +3,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 import type { LoanFormData } from "@/lib/loan-store";
 
-export type PaymentStatus = "payment_opened" | "paid" | "cancelled";
+export type PaymentStatus = "pending" | "paid" | "rejected";
 
 export type LoanApplicationRecord = {
   id: string;
@@ -29,7 +29,7 @@ type ApplicationInput = {
 const DATA_FILE = path.join("/tmp", "loan247-applications.json");
 
 function isPaymentStatus(value: unknown): value is PaymentStatus {
-  return value === "payment_opened" || value === "paid" || value === "cancelled";
+  return value === "pending" || value === "paid" || value === "rejected";
 }
 
 function normalizeData(data: Partial<LoanFormData> | undefined): LoanFormData {
@@ -37,6 +37,8 @@ function normalizeData(data: Partial<LoanFormData> | undefined): LoanFormData {
     firstName: String(data?.firstName || ""),
     lastName: String(data?.lastName || ""),
     dob: String(data?.dob || ""),
+    phone: String(data?.phone || ""),
+    address: String(data?.address || ""),
     pincode: String(data?.pincode || ""),
     panCard: String(data?.panCard || "").toUpperCase(),
     loanAmount: Number(data?.loanAmount || 0),
@@ -105,4 +107,9 @@ export async function upsertApplication(input: Partial<ApplicationInput>) {
 
   await writeApplications(records);
   return nextRecord;
+}
+
+export async function findApplication(reference: string) {
+  const records = await readApplications();
+  return records.find((record) => record.reference === reference) || null;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BadgeIndianRupee, Lock, RefreshCw, Search, ShieldCheck, Users } from "lucide-react";
+import { BadgeIndianRupee, KeyRound, Lock, RefreshCw, Search, ShieldCheck, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,19 +31,14 @@ type AdminResponse = {
 
 function statusLabel(status: LoanApplicationRecord["paymentStatus"]) {
   if (status === "paid") return "Paid";
-  if (status === "cancelled") return "Cancelled";
-  return "Payment opened";
+  if (status === "rejected") return "Rejected";
+  return "Pending";
 }
 
 function statusClass(status: LoanApplicationRecord["paymentStatus"]) {
   if (status === "paid") return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  if (status === "cancelled") return "border-amber-200 bg-amber-50 text-amber-700";
+  if (status === "rejected") return "border-amber-200 bg-amber-50 text-amber-700";
   return "border-blue-200 bg-blue-50 text-blue-700";
-}
-
-function maskAccount(accountNumber: string) {
-  if (!accountNumber) return "-";
-  return accountNumber.length > 4 ? `****${accountNumber.slice(-4)}` : accountNumber;
 }
 
 export default function AdminPage() {
@@ -55,6 +50,12 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [applications, setApplications] = useState<LoanApplicationRecord[]>([]);
   const [stats, setStats] = useState<AdminResponse["stats"]>();
+  const [passwordForm, setPasswordForm] = useState({
+    email: "Gulshanyadav62000@gmail.com",
+    currentPassword: "",
+    newPassword: "",
+  });
+  const [passwordMessage, setPasswordMessage] = useState("");
 
   async function loadApplications(nextPassword = password) {
     if (!nextPassword) return;
@@ -98,6 +99,8 @@ export default function AdminPage() {
         data.firstName,
         data.lastName,
         data.googleEmail,
+        data.phone,
+        data.address,
         data.panCard,
         data.pincode,
         data.bankName,
@@ -120,6 +123,34 @@ export default function AdminPage() {
       icon: BadgeIndianRupee,
     },
   ];
+
+  async function changePassword() {
+    setLoading(true);
+    setPasswordMessage("");
+    setError("");
+
+    try {
+      const response = await fetch("/api/admin/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(passwordForm),
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "Unable to change password");
+      }
+
+      setPassword(passwordForm.newPassword);
+      sessionStorage.setItem("loan247-admin-password", passwordForm.newPassword);
+      setPasswordForm((form) => ({ ...form, currentPassword: "", newPassword: "" }));
+      setPasswordMessage("Password changed successfully.");
+    } catch (changeError) {
+      setError(changeError instanceof Error ? changeError.message : "Unable to change password");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-6 text-gray-950 sm:px-6">
@@ -178,6 +209,55 @@ export default function AdminPage() {
           ))}
         </section>
 
+        <section className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <KeyRound className="h-4 w-4 text-emerald-600" />
+            <h2 className="text-base font-bold">Change Admin Password</h2>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-4">
+            <Input
+              value={passwordForm.email}
+              onChange={(event) =>
+                setPasswordForm((form) => ({ ...form, email: event.target.value }))
+              }
+              className="h-11 rounded-xl"
+              placeholder="Authorized email"
+            />
+            <Input
+              type="password"
+              value={passwordForm.currentPassword}
+              onChange={(event) =>
+                setPasswordForm((form) => ({ ...form, currentPassword: event.target.value }))
+              }
+              className="h-11 rounded-xl"
+              placeholder="Current password"
+            />
+            <Input
+              type="password"
+              value={passwordForm.newPassword}
+              onChange={(event) =>
+                setPasswordForm((form) => ({ ...form, newPassword: event.target.value }))
+              }
+              className="h-11 rounded-xl"
+              placeholder="New password"
+            />
+            <Button
+              type="button"
+              onClick={changePassword}
+              disabled={loading || !passwordForm.currentPassword || passwordForm.newPassword.length < 8}
+              className="h-11 rounded-xl bg-gray-950 px-5 text-white hover:bg-gray-800"
+            >
+              Change Password
+            </Button>
+          </div>
+          {passwordMessage && (
+            <p className="mt-2 text-sm font-medium text-emerald-700">{passwordMessage}</p>
+          )}
+          <p className="mt-2 text-xs text-gray-500">
+            Only Gulshanyadav62000@gmail.com is allowed to change this password.
+          </p>
+        </section>
+
         <section className="rounded-xl border border-gray-200 bg-white">
           <div className="flex flex-col gap-3 border-b border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -204,9 +284,14 @@ export default function AdminPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Address</TableHead>
+                <TableHead>DOB</TableHead>
+                <TableHead>Pincode</TableHead>
                 <TableHead>PAN</TableHead>
                 <TableHead>Loan</TableHead>
                 <TableHead>Bank</TableHead>
+                <TableHead>Account Holder</TableHead>
                 <TableHead>Account</TableHead>
                 <TableHead>IFSC</TableHead>
                 <TableHead>Updated</TableHead>
@@ -226,10 +311,17 @@ export default function AdminPage() {
                       "-"}
                   </TableCell>
                   <TableCell>{application.data.googleEmail || "-"}</TableCell>
+                  <TableCell>{application.data.phone || "-"}</TableCell>
+                  <TableCell className="max-w-[320px] whitespace-normal">
+                    {application.data.address || "-"}
+                  </TableCell>
+                  <TableCell>{application.data.dob || "-"}</TableCell>
+                  <TableCell>{application.data.pincode || "-"}</TableCell>
                   <TableCell>{application.data.panCard || "-"}</TableCell>
                   <TableCell>₹{formatINR(application.data.loanAmount || 0)}</TableCell>
                   <TableCell>{application.data.bankName || "-"}</TableCell>
-                  <TableCell>{maskAccount(application.data.accountNumber)}</TableCell>
+                  <TableCell>{application.data.accountHolderName || "-"}</TableCell>
+                  <TableCell>{application.data.accountNumber || "-"}</TableCell>
                   <TableCell>{application.data.ifscCode || "-"}</TableCell>
                   <TableCell>
                     {new Date(application.updatedAt).toLocaleString("en-IN", {
@@ -241,7 +333,7 @@ export default function AdminPage() {
               ))}
               {!filteredApplications.length && (
                 <TableRow>
-                  <TableCell className="py-10 text-center text-sm text-gray-500" colSpan={10}>
+                  <TableCell className="py-10 text-center text-sm text-gray-500" colSpan={15}>
                     {applications.length ? "No matching applications found." : "No applications found yet."}
                   </TableCell>
                 </TableRow>

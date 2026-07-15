@@ -57,16 +57,32 @@ const PAGE_CONTENT: Record<
     subtitle: "Please read carefully",
     sections: [
       {
-        heading: "Loan approval",
-        body: "Loan approval is at the sole discretion of LOAN247 and its partner lenders. Meeting eligibility criteria does not guarantee loan approval. Final approval depends on verification of documents and credit assessment.",
+        heading: "Service fee acknowledgement",
+        body: "By proceeding with the ₹59 service fee, you acknowledge and agree to the following:",
       },
       {
-        heading: "Interest rates & fees",
-        body: "Interest rates range from 12% to 24% p.a. depending on your credit profile. A one-time processing fee may apply. All charges are transparently disclosed before loan disbursal — no hidden fees.",
+        heading: "Processing and verification",
+        body: "The ₹59 fee is charged only for application processing, verification, and platform services.",
       },
       {
-        heading: "Credit score impact",
-        body: "Applying for a loan does not impact your CIBIL score. However, repayment behaviour on disbursed loans is reported to credit bureaus and affects your credit score.",
+        heading: "No approval guarantee",
+        body: "Payment of the service fee does not guarantee loan approval, loan disbursement, or any specific loan amount.",
+      },
+      {
+        heading: "Eligibility and lender decision",
+        body: "Loan approval is subject to eligibility checks, document verification, credit assessment (including CIBIL/Credit Score where applicable), lender policies, and other internal evaluation criteria. The final decision to approve or reject a loan application rests solely with the respective lending partner.",
+      },
+      {
+        heading: "Rejected applications",
+        body: "If your application is rejected or you do not meet the lender's eligibility criteria, the loan may not be approved even after payment of the service fee.",
+      },
+      {
+        heading: "Refund policy",
+        body: "The service fee is non-refundable, except where required under applicable law or as stated in our Refund Policy.",
+      },
+      {
+        heading: "Your agreement",
+        body: "By clicking \"Continue\" or making the payment, you confirm that you have read, understood, and agreed to this disclaimer and our Terms & Conditions.",
       },
     ],
   },

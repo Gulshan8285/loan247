@@ -53,6 +53,8 @@ export function ApplicationInProcessStep() {
         : "—",
     },
     { icon: CreditCard, label: "PAN number", value: data.panCard || "—" },
+    { icon: Phone, label: "Mobile", value: data.phone || "—" },
+    { icon: MapPin, label: "Address", value: data.address || "—" },
     { icon: MapPin, label: "Pin code", value: data.pincode || "—" },
   ];
 
@@ -146,7 +148,7 @@ export function ApplicationInProcessStep() {
             <span className="text-base font-black text-emerald-600">₹59</span>
           </div>
           <div className="border-t border-emerald-100 px-4 py-2.5 text-[11px] text-gray-500">
-            Paid via Razorpay · Refundable if loan isn&apos;t disbursed
+            Paid via Razorpay · Non-refundable except where required by law
           </div>
         </div>
       </div>
