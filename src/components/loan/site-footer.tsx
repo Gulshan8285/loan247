@@ -126,12 +126,8 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
           {/* Branding */}
           <div className="col-span-2 sm:col-span-1">
-            <div className="flex items-center gap-2.5">
-              <LoanLogo size={32} />
-              <div className="leading-tight">
-                <p className="text-sm font-bold tracking-tight text-gray-900">LOAN247</p>
-                <p className="text-[10px] uppercase tracking-widest text-gray-400">Loans, 24/7</p>
-              </div>
+            <div className="flex items-center">
+              <LoanLogo size={38} />
             </div>
             <p className="mt-3 text-xs leading-relaxed text-gray-500">
               India&apos;s trusted instant loan platform.

@@ -23,17 +23,9 @@ export function SiteHeader() {
               resetJourney();
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
-            className="flex min-w-0 items-center gap-2.5 rounded-2xl pr-2 transition-opacity hover:opacity-90 sm:gap-3"
+            className="flex min-w-0 items-center rounded-2xl pr-2 transition-opacity hover:opacity-90"
           >
-            <LoanLogo size={48} />
-            <div className="min-w-0 leading-tight">
-              <p className="truncate text-xl font-black text-gray-950 sm:text-2xl">
-                LOAN247
-              </p>
-              <p className="text-xs uppercase tracking-[0.28em] text-gray-400 sm:text-sm">
-                Loans, 24/7
-              </p>
-            </div>
+            <LoanLogo size={50} />
           </Link>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">

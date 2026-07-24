@@ -26,7 +26,7 @@ export async function HomeJsonLd() {
         "@id": `${SITE_URL}/#organization`,
         name: "LOAN247",
         url: SITE_URL,
-        logo: `${SITE_URL}/logo.svg`,
+        logo: `${SITE_URL}/images/loan247-logo-card.jpg`,
         sameAs,
         contactPoint: {
           "@type": "ContactPoint",

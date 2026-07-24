@@ -1,5 +1,5 @@
 const CACHE_NAME = "loan247-pwa-v1";
-const APP_SHELL = ["/", "/manifest.webmanifest", "/logo.svg"];
+const APP_SHELL = ["/", "/manifest.webmanifest", "/images/loan247-logo-wordmark.jpg", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

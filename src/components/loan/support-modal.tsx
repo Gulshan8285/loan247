@@ -54,9 +54,9 @@ export function SupportModal({ open, onClose }: { open: boolean; onClose: () => 
             <X className="h-4 w-4" />
           </button>
           <div className="flex items-center gap-3">
-            <LoanLogo size={40} />
+            <LoanLogo size={42} />
             <div>
-              <h2 className="text-lg font-bold leading-tight">LOAN247 Support</h2>
+              <h2 className="text-lg font-bold leading-tight">Support</h2>
               <p className="text-xs text-white/80">We&apos;re here to help, 24/7</p>
             </div>
           </div>
