@@ -66,6 +66,8 @@ export function PayFeeStep() {
           paymentAmount: FEE_AMOUNT,
           paymentProvider: "UPI",
           paymentLink: upiLink,
+          lastStep: 8,
+          lastStepLabel: "Processing fee",
           data,
         }),
       });

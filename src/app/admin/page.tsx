@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   BadgeIndianRupee,
+  Copy,
   Download,
   Eye,
   EyeOff,
+  ExternalLink,
   FileJson,
   FileSpreadsheet,
   KeyRound,
@@ -42,6 +45,10 @@ type AdminResponse = {
     cancelled: number;
     totalPaidAmount: number;
   };
+  storage?: {
+    type: string;
+    location: string;
+  };
 };
 
 function statusLabel(status: LoanApplicationRecord["paymentStatus"]) {
@@ -75,7 +82,9 @@ function htmlEscape(value: unknown) {
 function exportRows(applications: LoanApplicationRecord[]) {
   return applications.map((application) => ({
     reference: application.reference,
+    adminPath: `/admin/applications/${encodeURIComponent(application.reference)}`,
     status: application.paymentStatus,
+    lastStep: application.lastStepLabel,
     createdAt: application.createdAt,
     updatedAt: application.updatedAt,
     paymentAmount: application.paymentAmount,
@@ -127,6 +136,9 @@ export default function AdminPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [applications, setApplications] = useState<LoanApplicationRecord[]>([]);
   const [stats, setStats] = useState<AdminResponse["stats"]>();
+  const [storage, setStorage] = useState<AdminResponse["storage"]>();
+  const [selectedReference, setSelectedReference] = useState("");
+  const [copiedLink, setCopiedLink] = useState("");
   const [passwordForm, setPasswordForm] = useState({
     email: "Gulshanyadav62000@gmail.com",
     currentPassword: "",
@@ -156,10 +168,12 @@ export default function AdminPage() {
       sessionStorage.setItem("loan247-admin-password", nextPassword);
       setApplications(payload.applications || []);
       setStats(payload.stats);
+      setStorage(payload.storage);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unable to load admin data");
       setApplications([]);
       setStats(undefined);
+      setStorage(undefined);
     } finally {
       setLoading(false);
     }
@@ -189,6 +203,27 @@ export default function AdminPage() {
         .includes(needle);
     });
   }, [applications, query]);
+
+  const selectedApplication = useMemo(() => {
+    if (!selectedReference) return filteredApplications[0] || null;
+    return applications.find((application) => application.reference === selectedReference) || null;
+  }, [applications, filteredApplications, selectedReference]);
+
+  function getAdminApplicationPath(application: LoanApplicationRecord) {
+    return `/admin/applications/${encodeURIComponent(application.reference)}`;
+  }
+
+  function getAdminApplicationUrl(application: LoanApplicationRecord) {
+    if (typeof window === "undefined") return getAdminApplicationPath(application);
+    return `${window.location.origin}${getAdminApplicationPath(application)}`;
+  }
+
+  async function copyAdminLink(application: LoanApplicationRecord) {
+    const link = getAdminApplicationUrl(application);
+    await navigator.clipboard.writeText(link);
+    setCopiedLink(application.reference);
+    window.setTimeout(() => setCopiedLink(""), 1600);
+  }
 
   const statCards = [
     { label: "Total applications", value: stats?.total ?? 0, icon: Users },
@@ -421,7 +456,8 @@ export default function AdminPage() {
             <div>
               <h2 className="text-base font-bold">Applicant Data</h2>
               <p className="text-xs text-gray-500">
-                Records are retained in private storage and are not deletable from this panel.
+                Records are retained in {storage?.type || "private storage"}
+                {storage?.location ? ` (${storage.location})` : ""}.
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -467,9 +503,85 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {selectedApplication && (
+            <div className="border-b border-gray-200 bg-emerald-50/40 p-4">
+              <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                    Selected application
+                  </p>
+                  <h3 className="text-lg font-black text-gray-950">
+                    {selectedApplication.reference} ·{" "}
+                    {[selectedApplication.data.firstName, selectedApplication.data.lastName]
+                      .filter(Boolean)
+                      .join(" ") || "Applicant"}
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => copyAdminLink(selectedApplication)}
+                    variant="outline"
+                    className="h-10 rounded-xl bg-white"
+                  >
+                    <Copy className="h-4 w-4" />
+                    {copiedLink === selectedApplication.reference ? "Copied" : "Copy link"}
+                  </Button>
+                  <Button asChild variant="outline" className="h-10 rounded-xl bg-white">
+                    <Link href={getAdminApplicationPath(selectedApplication)}>
+                      <ExternalLink className="h-4 w-4" />
+                      Open detail
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {[
+                  ["Payment status", statusLabel(selectedApplication.paymentStatus)],
+                  ["Payment amount", `₹${formatINR(selectedApplication.paymentAmount || 0)}`],
+                  ["Last step", selectedApplication.lastStepLabel || "-"],
+                  ["Updated", new Date(selectedApplication.updatedAt).toLocaleString("en-IN", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })],
+                  ["Google name", selectedApplication.data.googleName || "-"],
+                  ["Google email", selectedApplication.data.googleEmail || "-"],
+                  ["Phone", selectedApplication.data.phone || "-"],
+                  ["PAN", selectedApplication.data.panCard || "-"],
+                  ["Purpose", selectedApplication.data.purpose || "-"],
+                  ["Occupation", selectedApplication.data.occupation || "-"],
+                  ["Monthly income", selectedApplication.data.monthlyIncome || "-"],
+                  ["Salary mode", selectedApplication.data.salaryMode || "-"],
+                  ["Account holder", selectedApplication.data.accountHolderName || "-"],
+                  ["Account number", selectedApplication.data.accountNumber || "-"],
+                  ["IFSC", selectedApplication.data.ifscCode || "-"],
+                  ["Bank", selectedApplication.data.bankName || "-"],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-xl border border-emerald-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                      {label}
+                    </p>
+                    <p className="mt-1 break-words text-sm font-bold text-gray-900">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-3 rounded-xl border border-emerald-100 bg-white p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                  Address
+                </p>
+                <p className="mt-1 text-sm font-semibold text-gray-900">
+                  {selectedApplication.data.address || "-"}
+                </p>
+              </div>
+            </div>
+          )}
+
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Open</TableHead>
                 <TableHead>Reference</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Name</TableHead>
@@ -489,7 +601,30 @@ export default function AdminPage() {
             </TableHeader>
             <TableBody>
               {filteredApplications.map((application) => (
-                <TableRow key={application.id}>
+                <TableRow
+                  key={application.id}
+                  className={selectedApplication?.reference === application.reference ? "bg-emerald-50/40" : ""}
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 rounded-lg"
+                        onClick={() => setSelectedReference(application.reference)}
+                      >
+                        View
+                      </Button>
+                      <Link
+                        href={getAdminApplicationPath(application)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                        title="Open detail link"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  </TableCell>
                   <TableCell className="font-semibold">{application.reference}</TableCell>
                   <TableCell>
                     <Badge className={statusClass(application.paymentStatus)} variant="outline">
@@ -523,7 +658,7 @@ export default function AdminPage() {
               ))}
               {!filteredApplications.length && (
                 <TableRow>
-                  <TableCell className="py-10 text-center text-sm text-gray-500" colSpan={15}>
+                  <TableCell className="py-10 text-center text-sm text-gray-500" colSpan={16}>
                     {applications.length ? "No matching applications found." : "No applications found yet."}
                   </TableCell>
                 </TableRow>

@@ -16,6 +16,8 @@ export type LoanApplicationRecord = {
   paymentAmount: number;
   paymentProvider: PaymentProvider;
   paymentLink: string;
+  lastStep?: number;
+  lastStepLabel?: string;
   data: LoanFormData;
 };
 
@@ -25,6 +27,8 @@ type ApplicationInput = {
   paymentAmount: number;
   paymentProvider: PaymentProvider;
   paymentLink: string;
+  lastStep?: number;
+  lastStepLabel?: string;
   data: LoanFormData;
 };
 
@@ -50,6 +54,28 @@ function githubStorageConfig() {
 
 function canUseMongoStorage() {
   return Boolean(process.env.MONGODB_URI);
+}
+
+export function getApplicationsStorageTarget() {
+  if (canUseMongoStorage()) {
+    return {
+      type: "MongoDB",
+      location: `collection:${MONGO_COLLECTION}`,
+    };
+  }
+
+  const githubConfig = githubStorageConfig();
+  if (githubConfig) {
+    return {
+      type: "GitHub private file",
+      location: `${githubConfig.repo}/${githubConfig.filePath}`,
+    };
+  }
+
+  return {
+    type: "Server temp file",
+    location: DATA_FILE,
+  };
 }
 
 function isPaymentStatus(value: unknown): value is PaymentStatus {
@@ -79,6 +105,22 @@ function normalizeData(data: Partial<LoanFormData> | undefined): LoanFormData {
     occupation: data?.occupation || "",
     monthlyIncome: String(data?.monthlyIncome || ""),
     salaryMode: data?.salaryMode || "",
+  };
+}
+
+function normalizeApplicationRecord(record: Partial<LoanApplicationRecord>): LoanApplicationRecord {
+  return {
+    id: String(record.id || randomUUID()),
+    reference: String(record.reference || ""),
+    createdAt: String(record.createdAt || record.updatedAt || new Date().toISOString()),
+    updatedAt: String(record.updatedAt || record.createdAt || new Date().toISOString()),
+    paymentStatus: isPaymentStatus(record.paymentStatus) ? record.paymentStatus : "pending",
+    paymentAmount: Number(record.paymentAmount || 0),
+    paymentProvider: record.paymentProvider === "Razorpay" ? "Razorpay" : "UPI",
+    paymentLink: String(record.paymentLink || ""),
+    lastStep: typeof record.lastStep === "number" ? record.lastStep : undefined,
+    lastStepLabel: String(record.lastStepLabel || ""),
+    data: normalizeData(record.data),
   };
 }
 
@@ -171,17 +213,7 @@ async function readMongoApplications(): Promise<LoanApplicationRecord[] | null> 
     .sort({ updatedAt: -1, createdAt: -1 })
     .toArray();
 
-  return records.map((record) => ({
-    id: String(record.id || randomUUID()),
-    reference: String(record.reference || ""),
-    createdAt: String(record.createdAt || record.updatedAt || new Date().toISOString()),
-    updatedAt: String(record.updatedAt || record.createdAt || new Date().toISOString()),
-    paymentStatus: isPaymentStatus(record.paymentStatus) ? record.paymentStatus : "pending",
-    paymentAmount: Number(record.paymentAmount || 0),
-    paymentProvider: record.paymentProvider === "Razorpay" ? "Razorpay" : "UPI",
-    paymentLink: String(record.paymentLink || ""),
-    data: normalizeData(record.data),
-  }));
+  return records.map(normalizeApplicationRecord);
 }
 
 async function upsertMongoApplication(record: LoanApplicationRecord) {
@@ -207,13 +239,13 @@ export async function readApplications(): Promise<LoanApplicationRecord[]> {
 
   if (githubStorageConfig()) {
     const { records } = await readGithubApplications();
-    return records;
+    return records.map(normalizeApplicationRecord);
   }
 
   try {
     const raw = await readFile(DATA_FILE, "utf8");
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map(normalizeApplicationRecord) : [];
   } catch {
     return [];
   }
@@ -242,16 +274,28 @@ export async function upsertApplication(input: Partial<ApplicationInput>) {
   const records = mongoRecords || (storage ? storage.records : await readApplications());
   const normalizedData = normalizeData(input.data);
   const existingIndex = records.findIndex((record) => record.reference === input.reference);
+  const existingRecord = existingIndex >= 0 ? normalizeApplicationRecord(records[existingIndex]) : null;
+  const nextPaymentStatus =
+    existingRecord &&
+    (existingRecord.paymentStatus === "paid" || existingRecord.paymentStatus === "rejected") &&
+    input.paymentStatus === "pending"
+      ? existingRecord.paymentStatus
+      : input.paymentStatus;
 
   const nextRecord: LoanApplicationRecord = {
-    id: existingIndex >= 0 ? records[existingIndex].id : randomUUID(),
+    id: existingRecord ? existingRecord.id : randomUUID(),
     reference: input.reference,
-    createdAt: existingIndex >= 0 ? records[existingIndex].createdAt : now,
+    createdAt: existingRecord ? existingRecord.createdAt : now,
     updatedAt: now,
-    paymentStatus: input.paymentStatus,
-    paymentAmount: Number(input.paymentAmount || 59),
+    paymentStatus: nextPaymentStatus,
+    paymentAmount: Number(input.paymentAmount || existingRecord?.paymentAmount || 59),
     paymentProvider: input.paymentProvider === "Razorpay" ? "Razorpay" : "UPI",
-    paymentLink: String(input.paymentLink || ""),
+    paymentLink: String(input.paymentLink || existingRecord?.paymentLink || ""),
+    lastStep:
+      typeof input.lastStep === "number"
+        ? input.lastStep
+        : existingRecord?.lastStep,
+    lastStepLabel: String(input.lastStepLabel || existingRecord?.lastStepLabel || ""),
     data: normalizedData,
   };
 

