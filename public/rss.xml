@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>LOAN247</title>
+    <link>https://www.loan247.online/</link>
+    <description>LOAN247 updates and personal loan application information.</description>
+    <language>en-IN</language>
+    <lastBuildDate>Wed, 22 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://www.loan247.online/rss.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>LOAN247 personal loan application</title>
+      <link>https://www.loan247.online/</link>
+      <guid>https://www.loan247.online/</guid>
+      <pubDate>Wed, 22 Jul 2026 00:00:00 +0000</pubDate>
+      <description>Apply for a personal loan with LOAN247 through a simple and secure online journey.</description>
+    </item>
+  </channel>
+</rss>

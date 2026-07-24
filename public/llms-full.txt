@@ -1,0 +1,26 @@
+# LOAN247 Full Site Context
+
+LOAN247 provides a simple online experience for personal loan applicants. The website is designed around a guided loan journey where users can review loan-related steps and continue through an application flow.
+
+Canonical website: https://www.loan247.online/
+
+Brand name: LOAN247
+
+Primary audience: Users in India looking for a mobile-friendly personal loan application experience.
+
+Primary topics:
+- Personal loan application
+- Online loan journey
+- Loan eligibility flow
+- Secure applicant information flow
+- Mobile-first fintech experience
+
+Important URLs:
+- Home: https://www.loan247.online/
+- Sitemap: https://www.loan247.online/sitemap.xml
+- Sitemap index: https://www.loan247.online/sitemap-index.xml
+- Image sitemap: https://www.loan247.online/image-sitemap.xml
+- RSS feed: https://www.loan247.online/rss.xml
+
+Crawler guidance:
+Public pages may be indexed. Protected or user-specific pages should not be treated as public editorial content.

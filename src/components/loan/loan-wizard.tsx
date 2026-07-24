@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { ArrowLeft, ArrowRight, Headset, Info, RotateCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, Info } from "lucide-react";
 import { isStepValid, useLoanStore } from "@/lib/loan-store";
 import { ProgressTrack } from "./progress-track";
-import { LoanLogo } from "./loan-logo";
-import { SupportModal } from "./support-modal";
-import { ContentModal } from "./content-modal";
 import { AppDownloadPrompt } from "./app-download-prompt";
 import { WelcomeStep } from "./steps/welcome-step";
 import { GoogleLoginStep } from "./steps/google-login-step";
@@ -39,9 +36,6 @@ export function LoanWizard() {
   const hydrate = useLoanStore((s) => s.hydrate);
   const goNext = useLoanStore((s) => s.goNext);
   const goBack = useLoanStore((s) => s.goBack);
-  const reset = useLoanStore((s) => s.reset);
-  const supportOpen = useLoanStore((s) => s.supportOpen);
-  const setSupportOpen = useLoanStore((s) => s.setSupportOpen);
 
   // Load any persisted state (returning customer) AFTER mount to avoid SSR
   // hydration mismatches. A returning customer lands on the step they left
@@ -54,49 +48,15 @@ export function LoanWizard() {
   const isFirst = step === 0;
   const isLast = step === STEPS.length - 1;
   // Steps that auto-advance or have their own CTA (no standard footer needed):
-  //  3 Analyser, 4 CIBIL, 7 Bank Processing (auto), 8 Pay Fee (own button)
-  const isAutoStep = step === 3 || step === 4 || step === 7 || step === 8;
+  //  1 Google Login, 3 Analyser, 4 CIBIL, 7 Bank Processing (auto), 8 Pay Fee (own button)
+  const isAutoStep = step === 1 || step === 3 || step === 4 || step === 7 || step === 8;
   const canProceed = isStepValid(step, data);
 
   return (
     <div className="relative flex min-h-screen flex-col bg-white">
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-gray-100 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2.5">
-            <LoanLogo size={32} />
-            <div className="leading-tight">
-              <p className="text-sm font-semibold tracking-tight text-gray-900">LOAN247</p>
-              <p className="text-[10px] uppercase tracking-widest text-gray-400">Loans, 24/7</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:block">
-              <AppDownloadPrompt compact />
-            </div>
-            <button
-              onClick={() => setSupportOpen(true)}
-              className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
-            >
-              <Headset className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Support</span>
-            </button>
-            {!isFirst && (
-              <button
-                onClick={reset}
-                className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Restart</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-
       {/* Progress (hidden on welcome & final) */}
       {!isFirst && !isLast && (
-        <div className="sticky top-[57px] z-20 border-b border-gray-100 bg-white">
+        <div className="sticky top-[73px] z-20 border-b border-gray-100 bg-white">
           <div className="mx-auto max-w-3xl px-4 py-3 sm:px-6">
             <ProgressTrack />
           </div>
@@ -148,12 +108,6 @@ export function LoanWizard() {
           </div>
         </footer>
       )}
-
-      {/* Support popup — opens from header Support button */}
-      <SupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
-
-      {/* Content popup — opens from footer links (About/EMI/Disclaimer/Privacy/Terms) */}
-      <ContentModal />
 
       {/* App download popup — shown automatically when the website opens */}
       <AppDownloadPrompt />

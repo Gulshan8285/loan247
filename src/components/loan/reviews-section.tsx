@@ -98,12 +98,12 @@ export function ReviewsSection() {
         </div>
       </div>
 
-      {/* Review cards grid */}
-      <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Review cards: swipe on phones, grid on larger screens */}
+      <div className="no-scrollbar -mx-4 mt-7 flex snap-x gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
         {REVIEWS.map((r) => (
           <div
             key={r.name}
-            className="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+            className="flex min-h-[250px] w-[82vw] shrink-0 snap-center flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:w-auto sm:min-w-0 sm:shrink"
           >
             {/* Top: avatar + name + verified + location */}
             <div className="flex items-center gap-3">

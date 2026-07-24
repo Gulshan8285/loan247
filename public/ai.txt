@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Site: https://www.loan247.online/
+Brand: LOAN247
+Purpose: Personal loan application website for users in India.
+Sitemap: https://www.loan247.online/ai-sitemap.xml
+LLMs: https://www.loan247.online/llms.txt
+Full-Context: https://www.loan247.online/llms-full.txt

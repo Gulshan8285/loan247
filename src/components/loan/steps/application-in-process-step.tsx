@@ -12,7 +12,6 @@ import {
   User,
 } from "lucide-react";
 import { formatINR, getApplicationRef, useLoanStore } from "@/lib/loan-store";
-import { SiteFooter } from "../site-footer";
 
 /**
  * ApplicationInProcessStep (terminal)
@@ -31,7 +30,6 @@ import { SiteFooter } from "../site-footer";
 export function ApplicationInProcessStep() {
   const data = useLoanStore((s) => s.data);
   const reset = useLoanStore((s) => s.reset);
-  const setSupportOpen = useLoanStore((s) => s.setSupportOpen);
   const refNo = getApplicationRef(data);
   const name = data.firstName || "Customer";
 
@@ -148,7 +146,7 @@ export function ApplicationInProcessStep() {
             <span className="text-base font-black text-emerald-600">₹59</span>
           </div>
           <div className="border-t border-emerald-100 px-4 py-2.5 text-[11px] text-gray-500">
-            Paid via Razorpay · Refundable if loan isn&apos;t disbursed
+            Paid via UPI · Refundable if loan isn&apos;t disbursed
           </div>
         </div>
       </div>
@@ -166,9 +164,6 @@ export function ApplicationInProcessStep() {
           Start a new application
         </button>
       </div>
-
-      {/* Site footer */}
-      <SiteFooter onContactClick={() => setSupportOpen(true)} />
     </div>
   );
 }

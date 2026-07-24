@@ -16,14 +16,24 @@ import { StepHeader } from "./step-header";
 /**
  * PayFeeStep
  * Because the customer's CIBIL is low, a one-time processing fee of ₹59 is
- * required. The "Pay ₹59 now" button opens the Razorpay payment link in a new tab.
+ * required. The "Pay ₹59 now" button opens the customer's UPI app.
  *
- * After the link opens, the customer confirms whether the payment was completed
- * or cancelled, matching the original payment screen flow.
+ * After UPI opens, the customer confirms whether the payment was completed
+ * or cancelled.
  */
 const FEE_AMOUNT = 59;
-const RAZORPAY_LINK =
-  "https://razorpay.me/@thepropertygallery?amount=t6b98btveFupXVKHk6kwug%3D%3D";
+const UPI_ID = "gulshanyadav62000-6@oksbi";
+
+function getUpiLink(reference: string) {
+  const params = new URLSearchParams({
+    pa: UPI_ID,
+    pn: "LOAN247",
+    am: String(FEE_AMOUNT),
+    cu: "INR",
+    tn: `LOAN247 processing fee ${reference}`,
+  });
+  return `upi://pay?${params.toString()}`;
+}
 
 type Phase = "idle" | "opened" | "paid" | "cancelled";
 
@@ -33,6 +43,7 @@ export function PayFeeStep() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [saving, setSaving] = useState(false);
   const reference = getApplicationRef(data);
+  const upiLink = getUpiLink(reference);
 
   // After the customer confirms payment is done, advance to the final screen.
   useEffect(() => {
@@ -53,8 +64,8 @@ export function PayFeeStep() {
           reference,
           paymentStatus,
           paymentAmount: FEE_AMOUNT,
-          paymentProvider: "Razorpay",
-          paymentLink: RAZORPAY_LINK,
+          paymentProvider: "UPI",
+          paymentLink: upiLink,
           data,
         }),
       });
@@ -65,7 +76,7 @@ export function PayFeeStep() {
 
   function handleOpenPayment() {
     void saveApplication("pending");
-    window.open(RAZORPAY_LINK, "_blank", "noopener,noreferrer");
+    window.location.href = upiLink;
     setPhase("opened");
   }
 
@@ -147,15 +158,13 @@ export function PayFeeStep() {
               <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
               <div className="text-left">
                 <p className="text-sm font-semibold text-gray-900">
-                  Payment page opened in a new tab.
+                  UPI payment opened.
                 </p>
                 <p className="mt-0.5 text-xs text-gray-500">
-                  Complete the ₹{FEE_AMOUNT} payment there, then tell us the result below.
+                  Complete the ₹{FEE_AMOUNT} payment to UPI ID <span className="font-semibold text-gray-700">{UPI_ID}</span>, then tell us the result below.
                   Didn&apos;t open?{" "}
                   <a
-                    href={RAZORPAY_LINK}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={upiLink}
                     className="font-semibold text-blue-600 underline underline-offset-2"
                   >
                     Open again
@@ -212,7 +221,7 @@ export function PayFeeStep() {
 
       <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-[11px] text-gray-400">
         <Lock className="h-3 w-3" />
-        Secured by Razorpay · 256-bit encryption · This won&apos;t affect your credit score
+        Pay using any UPI app · UPI ID: {UPI_ID} · This won&apos;t affect your credit score
       </p>
     </div>
   );

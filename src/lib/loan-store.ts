@@ -39,15 +39,12 @@ export interface LoanFormData {
   salaryMode: SalaryMode;
 }
 
-export type ContentPage = "about" | "emi" | "disclaimer" | "privacy" | "terms" | null;
-
 export interface LoanState {
   step: number;
   direction: 1 | -1;
   data: LoanFormData;
   hydrated: boolean; // true once persisted state has been loaded on the client
   supportOpen: boolean; // Support modal open state (shared across components)
-  contentPage: ContentPage; // which content popup is open (about/emi/etc)
   setStep: (step: number) => void;
   goNext: () => void;
   goBack: () => void;
@@ -55,7 +52,6 @@ export interface LoanState {
   reset: () => void;
   hydrate: () => void;
   setSupportOpen: (open: boolean) => void;
-  setContentPage: (page: ContentPage) => void;
 }
 
 /**
@@ -140,15 +136,26 @@ function clearPersistedState() {
   }
 }
 
+function hasGoogleLogin(data: LoanFormData) {
+  return data.googleEmail.trim().length > 0;
+}
+
+function requireGoogleLogin(step: number, data: LoanFormData) {
+  return step > 1 && !hasGoogleLogin(data) ? 1 : step;
+}
+
 export const useLoanStore = create<LoanState>((set, get) => ({
   step: 0,
   direction: 1,
   data: initialData,
   hydrated: false,
   supportOpen: false,
-  contentPage: null,
   setStep: (step) => {
-    set({ step, direction: step >= get().step ? 1 : -1 });
+    const nextStep = requireGoogleLogin(
+      Math.max(0, Math.min(TOTAL_STEPS - 1, step)),
+      get().data,
+    );
+    set({ step: nextStep, direction: nextStep >= get().step ? 1 : -1 });
     persistState(get());
   },
   goNext: () => {
@@ -177,13 +184,16 @@ export const useLoanStore = create<LoanState>((set, get) => ({
     if (get().hydrated) return;
     const persisted = loadPersistedState();
     if (persisted) {
-      set({ step: persisted.step, data: persisted.data, hydrated: true });
+      set({
+        step: requireGoogleLogin(persisted.step, persisted.data),
+        data: persisted.data,
+        hydrated: true,
+      });
     } else {
       set({ hydrated: true });
     }
   },
   setSupportOpen: (open) => set({ supportOpen: open }),
-  setContentPage: (page) => set({ contentPage: page }),
 }));
 
 export function formatINR(n: number): string {
@@ -199,6 +209,8 @@ export const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
  */
 export function validateStep(step: number, data: LoanFormData): string[] {
   switch (step) {
+    case 1:
+      return hasGoogleLogin(data) ? [] : ["googleEmail"];
     case 2: {
       // Basic Info
       const errs: string[] = [];

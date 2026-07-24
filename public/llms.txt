@@ -1,0 +1,20 @@
+# LOAN247
+
+> LOAN247 is a personal loan application website for users in India.
+
+## Primary URL
+
+- https://www.loan247.online/
+
+## What The Site Offers
+
+- Simple online personal loan application journey
+- Mobile-friendly loan form experience
+- Secure app-style flow for applicant details
+
+## Suggested Crawling
+
+- Main page: https://www.loan247.online/
+- Full AI context: https://www.loan247.online/llms-full.txt
+- AI policy: https://www.loan247.online/ai.txt
+- Sitemap index: https://www.loan247.online/sitemap-index.xml

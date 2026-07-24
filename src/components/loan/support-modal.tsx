@@ -86,7 +86,7 @@ export function SupportModal({ open, onClose }: { open: boolean; onClose: () => 
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-wide text-gray-400">Call us</p>
-              <p className="text-sm font-semibold text-gray-900">1800-247-2470</p>
+              <p className="text-sm font-semibold text-gray-900">9319903728 · 8810381949</p>
             </div>
           </div>
 
@@ -115,7 +115,7 @@ export function SupportModal({ open, onClose }: { open: boolean; onClose: () => 
           {/* Trust note */}
           <div className="flex items-center gap-2 rounded-xl bg-emerald-50/60 px-4 py-3 text-xs text-emerald-700">
             <ShieldCheck className="h-4 w-4 shrink-0" />
-            <span>RBI Registered NBFC · Your data is safe &amp; encrypted.</span>
+            <span>GST: 06IFSPK3336A1ZG · MSME: UDYAM-HR-05-0004197</span>
           </div>
         </div>
 

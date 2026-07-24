@@ -2,8 +2,10 @@ import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import type { LoanFormData } from "@/lib/loan-store";
+import { connectMongoDB } from "@/lib/mongodb";
 
 export type PaymentStatus = "pending" | "paid" | "rejected";
+export type PaymentProvider = "UPI" | "Razorpay";
 
 export type LoanApplicationRecord = {
   id: string;
@@ -12,7 +14,7 @@ export type LoanApplicationRecord = {
   updatedAt: string;
   paymentStatus: PaymentStatus;
   paymentAmount: number;
-  paymentProvider: "Razorpay";
+  paymentProvider: PaymentProvider;
   paymentLink: string;
   data: LoanFormData;
 };
@@ -21,12 +23,13 @@ type ApplicationInput = {
   reference: string;
   paymentStatus: PaymentStatus;
   paymentAmount: number;
-  paymentProvider: "Razorpay";
+  paymentProvider: PaymentProvider;
   paymentLink: string;
   data: LoanFormData;
 };
 
 const DATA_FILE = path.join("/tmp", "loan247-applications.json");
+const MONGO_COLLECTION = "loan247_applications";
 const DEFAULT_STORAGE_BRANCH = "main";
 const DEFAULT_STORAGE_PATH = "applications.json";
 
@@ -43,6 +46,10 @@ function githubStorageConfig() {
 
   if (!token || !repo) return null;
   return { token, repo, branch, filePath };
+}
+
+function canUseMongoStorage() {
+  return Boolean(process.env.MONGODB_URI);
 }
 
 function isPaymentStatus(value: unknown): value is PaymentStatus {
@@ -148,7 +155,56 @@ async function writeGithubApplications(records: LoanApplicationRecord[], sha?: s
   return true;
 }
 
+async function getMongoApplicationsCollection() {
+  const connection = await connectMongoDB();
+  const database = connection.connection.db;
+  if (!database) throw new Error("MongoDB database is not available.");
+  return database.collection<LoanApplicationRecord>(MONGO_COLLECTION);
+}
+
+async function readMongoApplications(): Promise<LoanApplicationRecord[] | null> {
+  if (!canUseMongoStorage()) return null;
+
+  const collection = await getMongoApplicationsCollection();
+  const records = await collection
+    .find({})
+    .sort({ updatedAt: -1, createdAt: -1 })
+    .toArray();
+
+  return records.map((record) => ({
+    id: String(record.id || randomUUID()),
+    reference: String(record.reference || ""),
+    createdAt: String(record.createdAt || record.updatedAt || new Date().toISOString()),
+    updatedAt: String(record.updatedAt || record.createdAt || new Date().toISOString()),
+    paymentStatus: isPaymentStatus(record.paymentStatus) ? record.paymentStatus : "pending",
+    paymentAmount: Number(record.paymentAmount || 0),
+    paymentProvider: record.paymentProvider === "Razorpay" ? "Razorpay" : "UPI",
+    paymentLink: String(record.paymentLink || ""),
+    data: normalizeData(record.data),
+  }));
+}
+
+async function upsertMongoApplication(record: LoanApplicationRecord) {
+  if (!canUseMongoStorage()) return false;
+
+  const collection = await getMongoApplicationsCollection();
+  await collection.updateOne(
+    { reference: record.reference },
+    { $set: record },
+    { upsert: true },
+  );
+
+  return true;
+}
+
 export async function readApplications(): Promise<LoanApplicationRecord[]> {
+  try {
+    const mongoRecords = await readMongoApplications();
+    if (mongoRecords) return mongoRecords;
+  } catch {
+    /* fall back to configured backup or local storage */
+  }
+
   if (githubStorageConfig()) {
     const { records } = await readGithubApplications();
     return records;
@@ -181,8 +237,9 @@ export async function upsertApplication(input: Partial<ApplicationInput>) {
   }
 
   const now = new Date().toISOString();
-  const storage = githubStorageConfig() ? await readGithubApplications() : null;
-  const records = storage ? storage.records : await readApplications();
+  const mongoRecords = canUseMongoStorage() ? await readMongoApplications() : null;
+  const storage = !mongoRecords && githubStorageConfig() ? await readGithubApplications() : null;
+  const records = mongoRecords || (storage ? storage.records : await readApplications());
   const normalizedData = normalizeData(input.data);
   const existingIndex = records.findIndex((record) => record.reference === input.reference);
 
@@ -193,7 +250,7 @@ export async function upsertApplication(input: Partial<ApplicationInput>) {
     updatedAt: now,
     paymentStatus: input.paymentStatus,
     paymentAmount: Number(input.paymentAmount || 59),
-    paymentProvider: "Razorpay",
+    paymentProvider: input.paymentProvider === "Razorpay" ? "Razorpay" : "UPI",
     paymentLink: String(input.paymentLink || ""),
     data: normalizedData,
   };
@@ -204,7 +261,9 @@ export async function upsertApplication(input: Partial<ApplicationInput>) {
     records.unshift(nextRecord);
   }
 
-  if (storage) {
+  if (mongoRecords) {
+    await upsertMongoApplication(nextRecord);
+  } else if (storage) {
     await writeGithubApplications(records, storage.sha);
   } else {
     await writeApplications(records);

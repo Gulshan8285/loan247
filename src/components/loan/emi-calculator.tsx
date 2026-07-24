@@ -44,7 +44,7 @@ export function EmiCalculator() {
   const tenurePct = ((tenure - MIN_TENURE) / (MAX_TENURE - MIN_TENURE)) * 100;
 
   return (
-    <section className="mx-auto mt-16 max-w-3xl">
+    <section id="emi-calculator" className="mx-auto mt-16 max-w-3xl scroll-mt-24">
       <div className="text-center">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
           Plan your loan

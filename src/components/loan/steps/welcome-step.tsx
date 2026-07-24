@@ -1,15 +1,46 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ArrowRight, Clock, IndianRupee, ShieldCheck, Sparkles, Star, TrendingUp, Zap } from "lucide-react";
 import { useLoanStore } from "@/lib/loan-store";
-import { LoanLogo } from "../loan-logo";
+import type { LoanProduct } from "@/lib/loan-products";
 import { EmiCalculator } from "../emi-calculator";
 import { ReviewsSection } from "../reviews-section";
-import { SiteFooter } from "../site-footer";
+import { LoanProductsSection } from "../loan-products-section";
 
 export function WelcomeStep() {
   const goNext = useLoanStore((s) => s.goNext);
-  const setSupportOpen = useLoanStore((s) => s.setSupportOpen);
+  const update = useLoanStore((s) => s.update);
+  const [selectedLoanSlug] = useState(() => {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search).get("loan");
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (!selectedLoanSlug) return;
+
+    let active = true;
+    fetch("/api/loan-products", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((payload) => {
+        if (!active || !payload?.ok || !Array.isArray(payload.products)) return;
+        const product = (payload.products as LoanProduct[]).find((item) => item.slug === selectedLoanSlug);
+        if (product?.purpose) {
+          update({ purpose: product.purpose });
+        }
+
+        if (product && params.get("apply") === "1") {
+          window.history.replaceState(null, "", "/");
+          goNext();
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, [goNext, selectedLoanSlug, update]);
 
   const trustBadges = [
     { label: "RBI Registered", icon: ShieldCheck },
@@ -106,14 +137,14 @@ export function WelcomeStep() {
         RBI Registered NBFC · Bank-grade encryption · No impact on credit score
       </div>
 
+      {/* Loan categories */}
+      <LoanProductsSection selectedSlug={selectedLoanSlug} />
+
       {/* EMI Calculator */}
       <EmiCalculator />
 
       {/* Customer reviews */}
       <ReviewsSection />
-
-      {/* Site footer */}
-      <SiteFooter onContactClick={() => setSupportOpen(true)} />
     </div>
   );
 }

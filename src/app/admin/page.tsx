@@ -7,6 +7,7 @@ import {
   Eye,
   EyeOff,
   FileJson,
+  FileSpreadsheet,
   KeyRound,
   Lock,
   RefreshCw,
@@ -17,6 +18,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LegalPagesManager } from "@/components/admin/legal-pages-manager";
+import { LoanProductsManager } from "@/components/admin/loan-products-manager";
 import {
   Table,
   TableBody,
@@ -59,6 +62,14 @@ function csvEscape(value: unknown) {
     return `"${text.replace(/"/g, '""')}"`;
   }
   return text;
+}
+
+function htmlEscape(value: unknown) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function exportRows(applications: LoanApplicationRecord[]) {
@@ -218,7 +229,7 @@ export default function AdminPage() {
     }
   }
 
-  function downloadData(format: "json" | "csv") {
+  function downloadData(format: "json" | "csv" | "excel") {
     const rows = exportRows(applications);
     const date = new Date().toISOString().slice(0, 10);
 
@@ -232,6 +243,30 @@ export default function AdminPage() {
     }
 
     const headers = Object.keys(rows[0] || {});
+
+    if (format === "excel") {
+      const table = [
+        "<table>",
+        `<thead><tr>${headers.map((header) => `<th>${htmlEscape(header)}</th>`).join("")}</tr></thead>`,
+        `<tbody>${rows
+          .map(
+            (row) =>
+              `<tr>${headers
+                .map((header) => `<td>${htmlEscape(row[header as keyof typeof row])}</td>`)
+                .join("")}</tr>`,
+          )
+          .join("")}</tbody>`,
+        "</table>",
+      ].join("");
+
+      downloadBlob(
+        `loan247-applications-${date}.xls`,
+        `<!doctype html><html><head><meta charset="utf-8"></head><body>${table}</body></html>`,
+        "application/vnd.ms-excel;charset=utf-8",
+      );
+      return;
+    }
+
     const csv = [
       headers.join(","),
       ...rows.map((row) => headers.map((header) => csvEscape(row[header as keyof typeof row])).join(",")),
@@ -377,6 +412,10 @@ export default function AdminPage() {
           </p>
         </section>
 
+        <LoanProductsManager password={password} />
+
+        <LegalPagesManager password={password} />
+
         <section className="rounded-xl border border-gray-200 bg-white">
           <div className="flex flex-col gap-3 border-b border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -386,6 +425,16 @@ export default function AdminPage() {
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Button
+                type="button"
+                onClick={() => downloadData("excel")}
+                disabled={!applications.length}
+                variant="outline"
+                className="h-10 rounded-xl"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Excel
+              </Button>
               <Button
                 type="button"
                 onClick={() => downloadData("csv")}

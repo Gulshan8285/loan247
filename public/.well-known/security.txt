@@ -1,0 +1,4 @@
+Contact: https://www.loan247.online/
+Preferred-Languages: en, hi
+Canonical: https://www.loan247.online/.well-known/security.txt
+Policy: https://www.loan247.online/

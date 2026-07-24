@@ -1,0 +1,93 @@
+name: Deploy to AWS Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: loan247-aws-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Package Elastic Beanstalk bundle
+        run: |
+          set -euo pipefail
+          rm -rf eb-bundle release
+          mkdir -p eb-bundle/.next
+          cp -R .next/standalone/. eb-bundle/
+          cp -R .next/static eb-bundle/.next/static
+          cp -R public eb-bundle/public
+          printf 'web: NODE_ENV=production PORT=${PORT:-8080} HOSTNAME=0.0.0.0 node server.js\n' > eb-bundle/Procfile
+          cd eb-bundle
+          zip -r ../release.zip .
+
+      - name: Upload release to S3
+        id: release
+        run: |
+          set -euo pipefail
+          VERSION_LABEL="loan247-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}"
+          S3_KEY="releases/${VERSION_LABEL}.zip"
+          aws s3 cp release.zip "s3://${{ vars.EB_S3_BUCKET }}/${S3_KEY}"
+          echo "version_label=${VERSION_LABEL}" >> "$GITHUB_OUTPUT"
+          echo "s3_key=${S3_KEY}" >> "$GITHUB_OUTPUT"
+
+      - name: Create Elastic Beanstalk version
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name "${{ vars.EB_APPLICATION_NAME }}" \
+            --version-label "${{ steps.release.outputs.version_label }}" \
+            --source-bundle S3Bucket="${{ vars.EB_S3_BUCKET }}",S3Key="${{ steps.release.outputs.s3_key }}" \
+            --region "${{ vars.AWS_REGION }}"
+
+      - name: Deploy Elastic Beanstalk version
+        run: |
+          aws elasticbeanstalk update-environment \
+            --environment-name "${{ vars.EB_ENVIRONMENT_NAME }}" \
+            --version-label "${{ steps.release.outputs.version_label }}" \
+            --region "${{ vars.AWS_REGION }}"
+
+      - name: Wait for deployment
+        run: |
+          aws elasticbeanstalk wait environment-updated \
+            --application-name "${{ vars.EB_APPLICATION_NAME }}" \
+            --environment-names "${{ vars.EB_ENVIRONMENT_NAME }}" \
+            --region "${{ vars.AWS_REGION }}"
+
+      - name: Verify production health
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error https://loan247.online/api/health
+          curl --fail --silent --show-error https://www.loan247.online/api/health

@@ -1,0 +1,11 @@
+/* TEAM */
+Brand: LOAN247
+Site: https://www.loan247.online/
+Contact: https://www.loan247.online/
+
+/* SITE */
+Language: English
+Market: India
+Technology: Next.js, React, Tailwind CSS
+Purpose: Secure personal loan application experience
+Last updated: 2026-07-22
