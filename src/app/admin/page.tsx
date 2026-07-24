@@ -21,8 +21,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LegalPagesManager } from "@/components/admin/legal-pages-manager";
-import { LoanProductsManager } from "@/components/admin/loan-products-manager";
 import {
   Table,
   TableBody,
@@ -467,10 +465,6 @@ export default function AdminPage() {
             Only Gulshanyadav62000@gmail.com is allowed to change this password.
           </p>
         </section>
-
-        <LoanProductsManager password={password} />
-
-        <LegalPagesManager password={password} />
 
         <section className="rounded-xl border border-gray-200 bg-white">
           <div className="flex flex-col gap-3 border-b border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between">

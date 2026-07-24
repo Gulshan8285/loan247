@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createLoanProduct, readLoanProducts } from "@/lib/loan-products-store";
+import { createBlogPost, readBlogPosts } from "@/lib/blog-posts";
 import { getContentAdminPassword } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  return NextResponse.json({ ok: true, products: await readLoanProducts() });
+  return NextResponse.json({ ok: true, posts: await readBlogPosts() });
 }
 
 export async function POST(request: Request) {
@@ -25,11 +25,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const product = await createLoanProduct(await request.json());
-    return NextResponse.json({ ok: true, product });
+    const post = await createBlogPost(await request.json());
+    return NextResponse.json({ ok: true, post });
   } catch (error) {
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Unable to save loan category." },
+      { ok: false, error: error instanceof Error ? error.message : "Unable to save blog post." },
       { status: 400 },
     );
   }

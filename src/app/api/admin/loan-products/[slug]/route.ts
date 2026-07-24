@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { deleteLoanProduct, updateLoanProduct } from "@/lib/loan-products-store";
-import { getAdminPassword } from "@/lib/admin-auth";
+import { getContentAdminPassword } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 async function isAuthorized(request: Request) {
-  const password = await getAdminPassword();
+  const password = await getContentAdminPassword();
   const supplied = request.headers.get("x-admin-password") || "";
   return Boolean(password) && supplied === password;
 }

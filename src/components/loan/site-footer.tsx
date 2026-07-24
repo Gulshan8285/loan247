@@ -13,6 +13,12 @@ type FooterPage = {
   order: number;
 };
 
+type FooterBlogPost = {
+  slug: string;
+  title: string;
+  order: number;
+};
+
 const FALLBACK_PAGES: FooterPage[] = [
   { slug: "about-us", title: "About Us", menuLabel: "About Us", category: "company", order: 10 },
   { slug: "contact-us", title: "Contact Us", menuLabel: "Contact Us", category: "support", order: 20 },
@@ -26,6 +32,7 @@ const contactButtonClass =
 
 export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) {
   const [pages, setPages] = useState<FooterPage[]>(FALLBACK_PAGES);
+  const [blogPosts, setBlogPosts] = useState<FooterBlogPost[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -34,6 +41,21 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
       .then((payload) => {
         if (!active || !payload?.ok || !Array.isArray(payload.pages)) return;
         setPages(payload.pages);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/blog-posts", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((payload) => {
+        if (!active || !payload?.ok || !Array.isArray(payload.posts)) return;
+        setBlogPosts(payload.posts.slice(0, 4));
       })
       .catch(() => undefined);
 
@@ -51,7 +73,7 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
   return (
     <footer className="mt-auto border-t border-gray-200 bg-gray-50">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-12">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
           {/* Branding */}
           <div className="col-span-2 sm:col-span-1">
             <div className="flex items-center gap-2.5">
@@ -118,6 +140,25 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
                 <li key={page.slug}>
                   <Link href={`/${page.slug}`} className="transition-colors hover:text-emerald-600">
                     {page.menuLabel}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Blog */}
+          <div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-700">Blog</p>
+            <ul className="space-y-2 text-sm text-gray-500">
+              <li>
+                <Link href="/blog" className="transition-colors hover:text-emerald-600">
+                  Blog Home
+                </Link>
+              </li>
+              {blogPosts.map((post) => (
+                <li key={post.slug}>
+                  <Link href={`/blog/${post.slug}`} className="transition-colors hover:text-emerald-600">
+                    {post.title}
                   </Link>
                 </li>
               ))}

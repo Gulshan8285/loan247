@@ -21,6 +21,12 @@ export async function getAdminPassword() {
   return "";
 }
 
+export async function getContentAdminPassword() {
+  if (process.env.ADMIN2_PASSWORD) return process.env.ADMIN2_PASSWORD;
+  if (process.env.CONTENT_ADMIN_PASSWORD) return process.env.CONTENT_ADMIN_PASSWORD;
+  return getAdminPassword();
+}
+
 export async function setAdminPassword(password: string) {
   await mkdir(path.dirname(PASSWORD_FILE), { recursive: true });
   await writeFile(PASSWORD_FILE, JSON.stringify({ password, updatedAt: new Date().toISOString() }));

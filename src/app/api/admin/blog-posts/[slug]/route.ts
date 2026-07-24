@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { deleteLegalPage, updateLegalPage } from "@/lib/legal-pages";
+import { deleteBlogPost, updateBlogPost } from "@/lib/blog-posts";
 import { getContentAdminPassword } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +18,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slug
 
   try {
     const { slug } = await params;
-    const page = await updateLegalPage(slug, await request.json());
-    return NextResponse.json({ ok: true, page });
+    const post = await updateBlogPost(slug, await request.json());
+    return NextResponse.json({ ok: true, post });
   } catch (error) {
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Unable to update page." },
+      { ok: false, error: error instanceof Error ? error.message : "Unable to update blog post." },
       { status: 400 },
     );
   }
@@ -35,11 +35,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ s
 
   try {
     const { slug } = await params;
-    await deleteLegalPage(slug);
+    await deleteBlogPost(slug);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Unable to delete page." },
+      { ok: false, error: error instanceof Error ? error.message : "Unable to delete blog post." },
       { status: 400 },
     );
   }
