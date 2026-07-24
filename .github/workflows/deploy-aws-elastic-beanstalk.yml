@@ -86,6 +86,25 @@ jobs:
             --environment-names "${{ vars.EB_ENVIRONMENT_NAME }}" \
             --region "${{ vars.AWS_REGION }}"
 
+      - name: Verify Elastic Beanstalk version
+        run: |
+          set -euo pipefail
+          DEPLOYED_VERSION="$(aws elasticbeanstalk describe-environments \
+            --application-name "${{ vars.EB_APPLICATION_NAME }}" \
+            --environment-names "${{ vars.EB_ENVIRONMENT_NAME }}" \
+            --region "${{ vars.AWS_REGION }}" \
+            --query 'Environments[0].VersionLabel' \
+            --output text)"
+          if [ "${DEPLOYED_VERSION}" != "${{ steps.release.outputs.version_label }}" ]; then
+            echo "Expected ${{ steps.release.outputs.version_label }}, got ${DEPLOYED_VERSION}"
+            aws elasticbeanstalk describe-events \
+              --application-name "${{ vars.EB_APPLICATION_NAME }}" \
+              --environment-name "${{ vars.EB_ENVIRONMENT_NAME }}" \
+              --region "${{ vars.AWS_REGION }}" \
+              --max-records 10
+            exit 1
+          fi
+
       - name: Verify production health
         run: |
           set -euo pipefail
