@@ -93,7 +93,7 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
   );
   const legalPages = useMemo(() => pages.filter((page) => page.category === "legal").slice(0, 8), [pages]);
   const socialLinks = useMemo<FooterSocialLink[]>(() => {
-    const links = settings?.socialLinks || {
+    const links: Record<SocialLinkKey, string> = settings?.socialLinks || {
       twitter: "https://twitter.com/loan247online",
       linkedin: "https://www.linkedin.com/company/loan247-online",
       facebook: "",
@@ -101,13 +101,15 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
       youtube: "",
     };
 
-    return [
+    const items: FooterSocialLink[] = [
       { key: "twitter", label: "LOAN247 on X", href: links.twitter },
       { key: "linkedin", label: "LOAN247 on LinkedIn", href: links.linkedin },
       { key: "facebook", label: "LOAN247 on Facebook", href: links.facebook },
       { key: "instagram", label: "LOAN247 on Instagram", href: links.instagram },
       { key: "youtube", label: "LOAN247 on YouTube", href: links.youtube },
-    ].filter((link) => link.href.trim());
+    ];
+
+    return items.filter((link) => link.href.trim());
   }, [settings]);
 
   const SocialIcon = {

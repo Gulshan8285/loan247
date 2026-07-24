@@ -8,7 +8,7 @@
 export function LoanLogo({ size = 32, className = "" }: { size?: number; className?: string }) {
   return (
     <span
-      className={`relative inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-emerald-500 ${className}`}
+      className={`relative inline-flex shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-500 shadow-sm shadow-emerald-500/20 ring-1 ring-white/60 ${className}`}
       style={{ width: size, height: size }}
       aria-hidden
     >

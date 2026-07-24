@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Info } from "lucide-react";
 import { getApplicationRef, isStepValid, useLoanStore, validateStep } from "@/lib/loan-store";
 import { ProgressTrack } from "./progress-track";
 import { AppDownloadPrompt } from "./app-download-prompt";
+import { LoanProductsSection } from "./loan-products-section";
 import { WelcomeStep } from "./steps/welcome-step";
 import { GoogleLoginStep } from "./steps/google-login-step";
 import { BasicInfoStep } from "./steps/basic-info-step";
@@ -123,9 +124,14 @@ export function LoanWizard() {
 
       {/* Step content */}
       <main className="flex flex-1 items-start justify-center px-4 pt-6 pb-32 sm:px-6 sm:pt-10 sm:pb-36">
-        <div className="w-full max-w-3xl">
+        <div className="w-full max-w-5xl">
           {hydrated ? (
-            <CurrentStep />
+            <>
+              <div className="mx-auto w-full max-w-3xl">
+                <CurrentStep />
+              </div>
+              {!isFirst && <LoanProductsSection variant="journey" />}
+            </>
           ) : (
             <div className="flex h-64 items-center justify-center">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-emerald-500" />

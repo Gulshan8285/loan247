@@ -55,7 +55,7 @@ async function streamToText(stream: unknown): Promise<string> {
 }
 
 function normalizeSettings(settings: Partial<SiteSettings> | undefined): SiteSettings {
-  const socialLinks = settings?.socialLinks || {};
+  const socialLinks: Partial<Record<SocialLinkKey, string>> = settings?.socialLinks || {};
   return {
     socialLinks: {
       twitter: String(socialLinks.twitter || DEFAULT_SETTINGS.socialLinks.twitter),
