@@ -70,7 +70,7 @@ export function LoanSelectionModal({ open, selectedSlug, onClose, onSelect }: Lo
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/45 px-3 pb-3 pt-16 backdrop-blur-sm sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-gray-950/45 px-3 pb-3 pt-16 backdrop-blur-sm sm:items-center sm:p-6">
       <div className="max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-4 py-4 sm:px-6">
           <div>
@@ -103,6 +103,7 @@ export function LoanSelectionModal({ open, selectedSlug, onClose, onSelect }: Lo
                 <button
                   key={product.slug}
                   type="button"
+                  data-loan-selection-slug={product.slug}
                   onClick={() => onSelect(product)}
                   className={[
                     "group flex min-h-[150px] flex-col rounded-2xl border bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md",

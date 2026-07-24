@@ -37,8 +37,6 @@ export function WelcomeStep() {
   });
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const shouldOpenSelection = params.get("selectLoan") === "1" || params.get("apply") === "1";
     if (!selectedLoanSlug) return;
 
     let active = true;
@@ -61,10 +59,6 @@ export function WelcomeStep() {
       })
       .catch(() => undefined);
 
-    if (shouldOpenSelection) {
-      setSelectionOpen(true);
-    }
-
     return () => {
       active = false;
     };
@@ -73,10 +67,10 @@ export function WelcomeStep() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    if (!selectedLoanSlug && (params.get("selectLoan") === "1" || params.get("apply") === "1")) {
+    if (params.get("selectLoan") === "1" || params.get("apply") === "1") {
       setSelectionOpen(true);
     }
-  }, [selectedLoanSlug]);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -98,6 +92,7 @@ export function WelcomeStep() {
   }
 
   function selectLoan(product: LoanProduct) {
+    window.history.replaceState(null, "", "/");
     setSelectedLoanSlug(product.slug);
     update({
       selectedLoanSlug: product.slug,
@@ -105,7 +100,6 @@ export function WelcomeStep() {
       ...(product.purpose ? { purpose: product.purpose } : {}),
     });
     setSelectionOpen(false);
-    window.history.replaceState(null, "", "/");
     goNext();
   }
 

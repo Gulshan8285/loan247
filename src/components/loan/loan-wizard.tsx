@@ -66,6 +66,7 @@ export function LoanWizard() {
   const goNext = useLoanStore((s) => s.goNext);
   const goBack = useLoanStore((s) => s.goBack);
   const lastAutosaveKey = useRef("");
+  const previousStepRef = useRef(step);
 
   // Load any persisted state (returning customer) AFTER mount to avoid SSR
   // hydration mismatches. A returning customer lands on the step they left
@@ -107,6 +108,15 @@ export function LoanWizard() {
 
     return () => window.clearTimeout(timeout);
   }, [data, hydrated, step]);
+
+  useEffect(() => {
+    if (!hydrated || previousStepRef.current === step) return;
+    previousStepRef.current = step;
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+  }, [hydrated, step]);
 
   const CurrentStep = STEPS[step];
   const isFirst = step === 0;
@@ -178,8 +188,8 @@ export function LoanWizard() {
         </footer>
       )}
 
-      {/* App download popup — shown automatically when the website opens */}
-      <AppDownloadPrompt />
+      {/* App download popup — welcome screen only, never over the application flow */}
+      {isFirst && <AppDownloadPrompt />}
     </div>
   );
 }
