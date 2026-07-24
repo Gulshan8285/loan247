@@ -96,14 +96,23 @@ export default function AdminApplicationDetailPage() {
   useEffect(() => {
     const clearAdminSession = () => {
       sessionStorage.removeItem("loan247-admin-password");
+      setPassword("");
+      setApplication(null);
+      setStorage(undefined);
+    };
+
+    const clearWhenHidden = () => {
+      if (document.visibilityState === "hidden") clearAdminSession();
     };
 
     window.addEventListener("pagehide", clearAdminSession);
     window.addEventListener("beforeunload", clearAdminSession);
+    document.addEventListener("visibilitychange", clearWhenHidden);
     return () => {
       clearAdminSession();
       window.removeEventListener("pagehide", clearAdminSession);
       window.removeEventListener("beforeunload", clearAdminSession);
+      document.removeEventListener("visibilitychange", clearWhenHidden);
     };
   }, []);
 
