@@ -18,6 +18,7 @@ export function ReviewStep() {
     },
     { icon: MapPin, label: "Pin code", value: data.pincode || "—" },
     { icon: CreditCard, label: "PAN number", value: data.panCard || "—" },
+    { icon: Target, label: "Selected loan", value: data.selectedLoanTitle || "—" },
     { icon: IndianRupee, label: "Loan amount", value: `₹${formatINR(data.loanAmount)}`, highlight: true },
     { icon: Landmark, label: "Bank account", value: data.accountNumber ? `${data.bankName} ••${data.accountNumber.slice(-4)}` : "—" },
     { icon: Target, label: "Purpose", value: data.purpose || "—" },

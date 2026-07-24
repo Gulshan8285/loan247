@@ -239,6 +239,7 @@ export default function AdminApplicationDetailPage() {
               <DetailField label="Google email" value={data.googleEmail} />
               <DetailField label="PAN" value={data.panCard} />
               <DetailField label="Pincode" value={data.pincode} />
+              <DetailField label="Selected loan" value={data.selectedLoanTitle} />
               <DetailField label="Loan amount" value={`₹${formatINR(data.loanAmount || 0)}`} />
               <DetailField label="CIBIL approved amount" value={`₹${formatINR(data.cibilApprovedAmount || 0)}`} />
               <DetailField label="Purpose" value={data.purpose} />

@@ -53,6 +53,7 @@ function decodeCredential(token: string): {
 export function GoogleLoginStep() {
   const goNext = useLoanStore((s) => s.goNext);
   const update = useLoanStore((s) => s.update);
+  const selectedLoanTitle = useLoanStore((s) => s.data.selectedLoanTitle);
   const btnContainerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
@@ -127,7 +128,11 @@ export function GoogleLoginStep() {
     <div className="w-full rounded-3xl border border-gray-100 bg-white p-6 text-center shadow-sm sm:p-10">
       <StepHeader
         title="Sign in with Google"
-        subtitle="Continue securely with your Google account to start your application."
+        subtitle={
+          selectedLoanTitle
+            ? `Continue securely with Google to apply for ${selectedLoanTitle}.`
+            : "Continue securely with your Google account to start your application."
+        }
         badge="Step 2 · Login"
       />
 

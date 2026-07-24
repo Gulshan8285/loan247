@@ -131,7 +131,7 @@ export default async function LoanDetailPage({
   const product = await findLoanProduct(slug);
   if (!product) notFound();
 
-  const applyHref = `/?loan=${product.slug}&apply=1`;
+  const applyHref = `/?selectLoan=1&loan=${product.slug}`;
 
   return (
     <main className="bg-white text-gray-950">

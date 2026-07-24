@@ -62,6 +62,7 @@ export function LoanWizard() {
   const data = useLoanStore((s) => s.data);
   const hydrated = useLoanStore((s) => s.hydrated);
   const hydrate = useLoanStore((s) => s.hydrate);
+  const reset = useLoanStore((s) => s.reset);
   const goNext = useLoanStore((s) => s.goNext);
   const goBack = useLoanStore((s) => s.goBack);
   const lastAutosaveKey = useRef("");
@@ -70,8 +71,12 @@ export function LoanWizard() {
   // hydration mismatches. A returning customer lands on the step they left
   // (e.g. the Pay step) with all their previously-filled details intact.
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("selectLoan") === "1" || params.get("apply") === "1") {
+      reset();
+    }
     hydrate();
-  }, [hydrate]);
+  }, [hydrate, reset]);
 
   useEffect(() => {
     if (!hydrated || step < 2 || validateStep(2, data).length > 0) return;

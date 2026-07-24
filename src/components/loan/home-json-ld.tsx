@@ -1,9 +1,12 @@
 import { getVisibleLoanProducts } from "@/lib/loan-products-store";
+import { readSiteSettings } from "@/lib/site-settings";
 
 const SITE_URL = "https://www.loan247.online";
 
 export async function HomeJsonLd() {
   const loanProducts = await getVisibleLoanProducts();
+  const settings = await readSiteSettings();
+  const sameAs = Object.values(settings.socialLinks).filter(Boolean);
   const loanServices = loanProducts.map((product) => ({
     "@type": "Service",
     "@id": `${SITE_URL}/loans/${product.slug}#service`,
@@ -24,10 +27,7 @@ export async function HomeJsonLd() {
         name: "LOAN247",
         url: SITE_URL,
         logo: `${SITE_URL}/logo.svg`,
-        sameAs: [
-          "https://twitter.com/loan247online",
-          "https://www.linkedin.com/company/loan247-online",
-        ],
+        sameAs,
         contactPoint: {
           "@type": "ContactPoint",
           telephone: "+91-9319903728",
@@ -102,8 +102,8 @@ export async function HomeJsonLd() {
         "@type": "WebPage",
         "@id": `${SITE_URL}/#webpage`,
         url: SITE_URL,
-        name: "LOAN247 - Personal Loan Application Online",
-        description: "Apply for a LOAN247 personal loan through a simple, secure, mobile-friendly online application journey.",
+        name: settings.homePage.seoTitle,
+        description: settings.homePage.seoDescription,
         isPartOf: { "@id": `${SITE_URL}/#website` },
         breadcrumb: { "@id": `${SITE_URL}/#breadcrumb` },
         mainEntity: { "@id": `${SITE_URL}/#financialservice` },

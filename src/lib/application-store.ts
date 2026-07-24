@@ -120,6 +120,8 @@ function normalizeData(data: Partial<LoanFormData> | undefined): LoanFormData {
     googleName: String(data?.googleName || ""),
     googleEmail: String(data?.googleEmail || ""),
     googlePicture: String(data?.googlePicture || ""),
+    selectedLoanSlug: String(data?.selectedLoanSlug || ""),
+    selectedLoanTitle: String(data?.selectedLoanTitle || ""),
     purpose: data?.purpose || "",
     occupation: data?.occupation || "",
     monthlyIncome: String(data?.monthlyIncome || ""),

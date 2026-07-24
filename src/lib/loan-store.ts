@@ -33,6 +33,8 @@ export interface LoanFormData {
   googleName: string;
   googleEmail: string;
   googlePicture: string;
+  selectedLoanSlug: string;
+  selectedLoanTitle: string;
   purpose: LoanPurpose;
   occupation: OccupationType;
   monthlyIncome: string;
@@ -87,6 +89,8 @@ const initialData: LoanFormData = {
   googleName: "",
   googleEmail: "",
   googlePicture: "",
+  selectedLoanSlug: "",
+  selectedLoanTitle: "",
   purpose: "",
   occupation: "",
   monthlyIncome: "",

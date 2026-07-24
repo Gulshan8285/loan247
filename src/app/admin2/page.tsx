@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Eye, EyeOff, Lock, Newspaper, Settings2 } from "lucide-react";
 import { BlogPostsManager } from "@/components/admin/blog-posts-manager";
+import { HomePageManager } from "@/components/admin/home-page-manager";
 import { LegalPagesManager } from "@/components/admin/legal-pages-manager";
 import { LoanProductsManager } from "@/components/admin/loan-products-manager";
 import { SocialMediaManager } from "@/components/admin/social-media-manager";
@@ -52,7 +53,7 @@ export default function ContentAdminPage() {
               Content Dashboard
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-gray-500">
-              Manage loan category pages, legal/footer pages, and website blog posts.
+              Manage home SEO, loan category pages, legal/footer pages, and website blog posts.
             </p>
           </div>
 
@@ -95,13 +96,14 @@ export default function ContentAdminPage() {
             <Newspaper className="mx-auto h-8 w-8 text-emerald-600" />
             <h2 className="mt-3 text-lg font-black">Unlock content admin</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Enter the Admin2 password to edit loan pages, legal pages, and blogs.
+              Enter the Admin2 password to edit home content, loan pages, legal pages, and blogs.
             </p>
           </section>
         )}
 
         {unlockedPassword && (
           <>
+            <HomePageManager password={unlockedPassword} />
             <SocialMediaManager password={unlockedPassword} />
             <LoanProductsManager password={unlockedPassword} />
             <LegalPagesManager password={unlockedPassword} />

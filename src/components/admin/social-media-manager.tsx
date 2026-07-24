@@ -28,6 +28,15 @@ const EMPTY_SETTINGS: SiteSettings = {
     instagram: "",
     youtube: "",
   },
+  homePage: {
+    seoTitle: "",
+    seoDescription: "",
+    badgeText: "",
+    headline: "",
+    amountText: "",
+    description: "",
+    trustLine: "",
+  },
   updatedAt: "",
 };
 
