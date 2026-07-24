@@ -107,11 +107,14 @@ export function LoanProductsSection({ selectedSlug, variant = "home" }: LoanProd
     const interval = window.setInterval(() => {
       setActiveIndex((currentIndex) => {
         const nextIndex = (currentIndex + 1) % products.length;
-        cardRefs.current[nextIndex]?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "center",
-        });
+        const scroller = scrollerRef.current;
+        const nextCard = cardRefs.current[nextIndex];
+
+        if (scroller && nextCard) {
+          const nextLeft = nextCard.offsetLeft - (scroller.clientWidth - nextCard.clientWidth) / 2;
+          scroller.scrollTo({ left: Math.max(0, nextLeft), behavior: "smooth" });
+        }
+
         return nextIndex;
       });
     }, 3400);
