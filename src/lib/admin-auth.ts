@@ -5,6 +5,8 @@ const PASSWORD_FILE = path.join("/tmp", "loan247-admin-password.json");
 export const ADMIN_PASSWORD_CHANGE_EMAIL = "Gulshanyadav62000@gmail.com";
 
 export async function getAdminPassword() {
+  if (process.env.ADMIN_PASSWORD) return process.env.ADMIN_PASSWORD;
+
   try {
     const raw = await readFile(PASSWORD_FILE, "utf8");
     const parsed = JSON.parse(raw);
@@ -15,7 +17,6 @@ export async function getAdminPassword() {
     /* use configured fallback */
   }
 
-  if (process.env.ADMIN_PASSWORD) return process.env.ADMIN_PASSWORD;
   if (process.env.NODE_ENV !== "production") return "loan247-admin";
   return "";
 }
