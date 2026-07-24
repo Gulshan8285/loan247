@@ -44,9 +44,7 @@ function DetailField({ label, value }: { label: string; value: unknown }) {
 export default function AdminApplicationDetailPage() {
   const params = useParams<{ reference: string }>();
   const reference = decodeURIComponent(params.reference || "");
-  const [password, setPassword] = useState(() =>
-    typeof window === "undefined" ? "" : sessionStorage.getItem("loan247-admin-password") || "",
-  );
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -78,7 +76,6 @@ export default function AdminApplicationDetailPage() {
         throw new Error(payload.error || "Unable to load application");
       }
 
-      sessionStorage.setItem("loan247-admin-password", nextPassword);
       setApplication(payload.application);
       setStorage(payload.storage);
     } catch (loadError) {
@@ -97,8 +94,24 @@ export default function AdminApplicationDetailPage() {
   }
 
   useEffect(() => {
-    if (password) void loadApplication(password);
-    // loadApplication intentionally stays outside deps to avoid refetching on every password edit.
+    const clearAdminSession = () => {
+      sessionStorage.removeItem("loan247-admin-password");
+    };
+
+    window.addEventListener("pagehide", clearAdminSession);
+    window.addEventListener("beforeunload", clearAdminSession);
+    return () => {
+      clearAdminSession();
+      window.removeEventListener("pagehide", clearAdminSession);
+      window.removeEventListener("beforeunload", clearAdminSession);
+    };
+  }, []);
+
+  useEffect(() => {
+    setApplication(null);
+    setStorage(undefined);
+    setError("");
+    // loadApplication intentionally stays outside deps because this route now requires a fresh password.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reference]);
 

@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
+import { GetObjectCommand, PutObjectCommand, S3Client, S3ServiceException } from "@aws-sdk/client-s3";
 import type { LoanFormData } from "@/lib/loan-store";
 import { connectMongoDB } from "@/lib/mongodb";
 
@@ -36,6 +37,7 @@ const DATA_FILE = path.join("/tmp", "loan247-applications.json");
 const MONGO_COLLECTION = "loan247_applications";
 const DEFAULT_STORAGE_BRANCH = "main";
 const DEFAULT_STORAGE_PATH = "applications.json";
+const DEFAULT_S3_KEY = "applications/applications.json";
 
 type GithubFile = {
   records: LoanApplicationRecord[];
@@ -56,11 +58,28 @@ function canUseMongoStorage() {
   return Boolean(process.env.MONGODB_URI);
 }
 
+function s3StorageConfig() {
+  const bucket = process.env.APPLICATIONS_S3_BUCKET || "";
+  const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "ap-south-1";
+  const key = process.env.APPLICATIONS_S3_KEY || DEFAULT_S3_KEY;
+
+  if (!bucket) return null;
+  return { bucket, region, key };
+}
+
 export function getApplicationsStorageTarget() {
   if (canUseMongoStorage()) {
     return {
       type: "MongoDB",
       location: `collection:${MONGO_COLLECTION}`,
+    };
+  }
+
+  const s3Config = s3StorageConfig();
+  if (s3Config) {
+    return {
+      type: "AWS S3 private bucket",
+      location: `${s3Config.bucket}/${s3Config.key}`,
     };
   }
 
@@ -135,6 +154,69 @@ function githubHeaders(token: string) {
     "Content-Type": "application/json",
     "X-GitHub-Api-Version": "2022-11-28",
   };
+}
+
+async function streamToText(stream: unknown): Promise<string> {
+  if (!stream) return "";
+
+  const streamWithTransform = stream as { transformToString?: () => Promise<string> };
+  if (typeof streamWithTransform.transformToString === "function") {
+    return streamWithTransform.transformToString();
+  }
+
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream as AsyncIterable<Uint8Array>) {
+    chunks.push(Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+function s3Client(region: string) {
+  return new S3Client({ region });
+}
+
+async function readS3Applications(): Promise<LoanApplicationRecord[] | null> {
+  const config = s3StorageConfig();
+  if (!config) return null;
+
+  try {
+    const response = await s3Client(config.region).send(
+      new GetObjectCommand({
+        Bucket: config.bucket,
+        Key: config.key,
+      }),
+    );
+    const raw = await streamToText(response.Body);
+    const parsed = JSON.parse(raw || "[]");
+    return Array.isArray(parsed) ? parsed.map(normalizeApplicationRecord) : [];
+  } catch (error) {
+    if (
+      error instanceof S3ServiceException &&
+      (error.name === "NoSuchKey" || error.$metadata.httpStatusCode === 404)
+    ) {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+async function writeS3Applications(records: LoanApplicationRecord[]) {
+  const config = s3StorageConfig();
+  if (!config) return false;
+
+  await s3Client(config.region).send(
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: config.key,
+      Body: JSON.stringify(records, null, 2),
+      ContentType: "application/json",
+      ServerSideEncryption: "AES256",
+    }),
+  );
+
+  return true;
 }
 
 async function readGithubApplications(): Promise<GithubFile> {
@@ -237,11 +319,37 @@ export async function readApplications(): Promise<LoanApplicationRecord[]> {
     /* fall back to configured backup or local storage */
   }
 
-  if (githubStorageConfig()) {
-    const { records } = await readGithubApplications();
-    return records.map(normalizeApplicationRecord);
+  try {
+    const s3Records = await readS3Applications();
+    if (s3Records) {
+      if (s3Records.length > 0) return s3Records;
+
+      const localRecords = await readLocalApplications();
+      if (localRecords.length > 0) {
+        await writeS3Applications(localRecords);
+        return localRecords;
+      }
+
+      return s3Records;
+    }
+  } catch {
+    /* fall back to configured backup or local storage */
   }
 
+  if (githubStorageConfig()) {
+    try {
+      const { records } = await readGithubApplications();
+      const normalizedRecords = records.map(normalizeApplicationRecord);
+      if (normalizedRecords.length > 0) return normalizedRecords;
+    } catch {
+      /* fall back to local storage */
+    }
+  }
+
+  return readLocalApplications();
+}
+
+async function readLocalApplications(): Promise<LoanApplicationRecord[]> {
   try {
     const raw = await readFile(DATA_FILE, "utf8");
     const parsed = JSON.parse(raw);
@@ -252,6 +360,10 @@ export async function readApplications(): Promise<LoanApplicationRecord[]> {
 }
 
 async function writeApplications(records: LoanApplicationRecord[]) {
+  if (await writeS3Applications(records)) {
+    return;
+  }
+
   const config = githubStorageConfig();
   if (config) {
     const { sha } = await readGithubApplications();
@@ -270,8 +382,10 @@ export async function upsertApplication(input: Partial<ApplicationInput>) {
 
   const now = new Date().toISOString();
   const mongoRecords = canUseMongoStorage() ? await readMongoApplications() : null;
-  const storage = !mongoRecords && githubStorageConfig() ? await readGithubApplications() : null;
-  const records = mongoRecords || (storage ? storage.records : await readApplications());
+  const s3Records = !mongoRecords ? await readS3Applications() : null;
+  const storage =
+    !mongoRecords && !s3Records && githubStorageConfig() ? await readGithubApplications() : null;
+  const records = mongoRecords || s3Records || (storage ? storage.records : await readApplications());
   const normalizedData = normalizeData(input.data);
   const existingIndex = records.findIndex((record) => record.reference === input.reference);
   const existingRecord = existingIndex >= 0 ? normalizeApplicationRecord(records[existingIndex]) : null;
@@ -307,6 +421,8 @@ export async function upsertApplication(input: Partial<ApplicationInput>) {
 
   if (mongoRecords) {
     await upsertMongoApplication(nextRecord);
+  } else if (s3Records) {
+    await writeS3Applications(records);
   } else if (storage) {
     await writeGithubApplications(records, storage.sha);
   } else {

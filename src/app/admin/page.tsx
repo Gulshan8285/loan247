@@ -125,9 +125,7 @@ function downloadBlob(filename: string, content: string, type: string) {
 }
 
 export default function AdminPage() {
-  const [password, setPassword] = useState(() =>
-    typeof window === "undefined" ? "" : sessionStorage.getItem("loan247-admin-password") || "",
-  );
+  const [password, setPassword] = useState("");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -165,7 +163,6 @@ export default function AdminPage() {
         throw new Error(payload.error || "Unable to load admin data");
       }
 
-      sessionStorage.setItem("loan247-admin-password", nextPassword);
       setApplications(payload.applications || []);
       setStats(payload.stats);
       setStorage(payload.storage);
@@ -254,7 +251,6 @@ export default function AdminPage() {
       }
 
       setPassword(passwordForm.newPassword);
-      sessionStorage.setItem("loan247-admin-password", passwordForm.newPassword);
       setPasswordForm((form) => ({ ...form, currentPassword: "", newPassword: "" }));
       setPasswordMessage("Password changed successfully.");
     } catch (changeError) {
@@ -309,6 +305,20 @@ export default function AdminPage() {
 
     downloadBlob(`loan247-applications-${date}.csv`, csv, "text/csv;charset=utf-8");
   }
+
+  useEffect(() => {
+    const clearAdminSession = () => {
+      sessionStorage.removeItem("loan247-admin-password");
+    };
+
+    window.addEventListener("pagehide", clearAdminSession);
+    window.addEventListener("beforeunload", clearAdminSession);
+    return () => {
+      clearAdminSession();
+      window.removeEventListener("pagehide", clearAdminSession);
+      window.removeEventListener("beforeunload", clearAdminSession);
+    };
+  }, []);
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-6 text-gray-950 sm:px-6">
