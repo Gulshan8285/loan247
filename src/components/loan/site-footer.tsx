@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Headset, Linkedin, ShieldCheck, Twitter } from "lucide-react";
+import { Facebook, Headset, Instagram, Linkedin, ShieldCheck, Twitter, Youtube } from "lucide-react";
 import { LoanLogo } from "./loan-logo";
+import type { SiteSettings, SocialLinkKey } from "@/lib/site-settings";
 
 type FooterPage = {
   slug: string;
@@ -17,6 +18,12 @@ type FooterBlogPost = {
   slug: string;
   title: string;
   order: number;
+};
+
+type FooterSocialLink = {
+  key: SocialLinkKey;
+  label: string;
+  href: string;
 };
 
 const FALLBACK_PAGES: FooterPage[] = [
@@ -33,6 +40,7 @@ const contactButtonClass =
 export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) {
   const [pages, setPages] = useState<FooterPage[]>(FALLBACK_PAGES);
   const [blogPosts, setBlogPosts] = useState<FooterBlogPost[]>([]);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -41,6 +49,21 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
       .then((payload) => {
         if (!active || !payload?.ok || !Array.isArray(payload.pages)) return;
         setPages(payload.pages);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/site-settings", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((payload) => {
+        if (!active || !payload?.ok || !payload.settings) return;
+        setSettings(payload.settings);
       })
       .catch(() => undefined);
 
@@ -69,6 +92,31 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
     [pages],
   );
   const legalPages = useMemo(() => pages.filter((page) => page.category === "legal").slice(0, 8), [pages]);
+  const socialLinks = useMemo<FooterSocialLink[]>(() => {
+    const links = settings?.socialLinks || {
+      twitter: "https://twitter.com/loan247online",
+      linkedin: "https://www.linkedin.com/company/loan247-online",
+      facebook: "",
+      instagram: "",
+      youtube: "",
+    };
+
+    return [
+      { key: "twitter", label: "LOAN247 on X", href: links.twitter },
+      { key: "linkedin", label: "LOAN247 on LinkedIn", href: links.linkedin },
+      { key: "facebook", label: "LOAN247 on Facebook", href: links.facebook },
+      { key: "instagram", label: "LOAN247 on Instagram", href: links.instagram },
+      { key: "youtube", label: "LOAN247 on YouTube", href: links.youtube },
+    ].filter((link) => link.href.trim());
+  }, [settings]);
+
+  const SocialIcon = {
+    twitter: Twitter,
+    linkedin: Linkedin,
+    facebook: Facebook,
+    instagram: Instagram,
+    youtube: Youtube,
+  };
 
   return (
     <footer className="mt-auto border-t border-gray-200 bg-gray-50">
@@ -92,24 +140,21 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
             </span>
             <p className="mt-2 text-[11px] font-medium text-gray-500">MSME: UDYAM-HR-05-0004197</p>
             <div className="mt-4 flex items-center gap-2">
-              <a
-                href="https://twitter.com/loan247online"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LOAN247 on X"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-emerald-200 hover:text-emerald-700"
-              >
-                <Twitter className="h-4 w-4" />
-              </a>
-              <a
-                href="https://www.linkedin.com/company/loan247-online"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LOAN247 on LinkedIn"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-emerald-200 hover:text-emerald-700"
-              >
-                <Linkedin className="h-4 w-4" />
-              </a>
+              {socialLinks.map((link) => {
+                const Icon = SocialIcon[link.key];
+                return (
+                  <a
+                    key={link.key}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={link.label}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-emerald-200 hover:text-emerald-700"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                );
+              })}
             </div>
           </div>
 
@@ -152,7 +197,7 @@ export function SiteFooter({ onContactClick }: { onContactClick?: () => void }) 
             <ul className="space-y-2 text-sm text-gray-500">
               <li>
                 <Link href="/blog" className="transition-colors hover:text-emerald-600">
-                  Blog Home
+                  Blog
                 </Link>
               </li>
               {blogPosts.map((post) => (

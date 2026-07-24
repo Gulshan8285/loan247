@@ -5,6 +5,7 @@ import { Eye, EyeOff, Lock, Newspaper, Settings2 } from "lucide-react";
 import { BlogPostsManager } from "@/components/admin/blog-posts-manager";
 import { LegalPagesManager } from "@/components/admin/legal-pages-manager";
 import { LoanProductsManager } from "@/components/admin/loan-products-manager";
+import { SocialMediaManager } from "@/components/admin/social-media-manager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -101,6 +102,7 @@ export default function ContentAdminPage() {
 
         {unlockedPassword && (
           <>
+            <SocialMediaManager password={unlockedPassword} />
             <LoanProductsManager password={unlockedPassword} />
             <LegalPagesManager password={unlockedPassword} />
             <BlogPostsManager password={unlockedPassword} />
